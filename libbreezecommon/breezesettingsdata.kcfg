@@ -110,6 +110,30 @@
         <default>false</default>
     </entry>
 
+    <entry name="DrawTitleBarLeftToRightGradient" type = "Bool">
+        <default>false</default>
+    </entry>
+
+    <entry name="TitleBarLeftToRightGradientLeftColor" type = "Color">
+        <default>0, 120, 215</default>
+    </entry>
+
+    <entry name="TitleBarLeftToRightGradientRightColor" type = "Color">
+        <default>0, 240, 255</default>
+    </entry>
+
+    <entry name="DrawTitleBarLeftToRightGradientInactive" type = "Bool">
+        <default>false</default>
+    </entry>
+
+    <entry name="TitleBarLeftToRightGradientLeftColorInactive" type = "Color">
+        <default>112, 128, 144</default>
+    </entry>
+
+    <entry name="TitleBarLeftToRightGradientRightColorInactive" type = "Color">
+        <default>192, 192, 192</default>
+    </entry>
+
     <entry name="DrawTitleBarSeparator" type = "Bool">
         <default>true</default>
     </entry>

@@ -1072,6 +1072,53 @@
           </widget>
          </item>
          <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_gradientOptions">
+           <property name="leftMargin">
+            <number>20</number>
+           </property>
+           <item>
+            <widget class="QCheckBox" name="drawTitleBarLeftToRightGradient">
+             <property name="text">
+              <string>Use left-to-right custom gradient</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_gradientLeft">
+             <property name="text">
+              <string>Left color:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="KColorButton" name="titleBarLeftToRightGradientLeftColor"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_gradientRight">
+             <property name="text">
+              <string>Right color:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="KColorButton" name="titleBarLeftToRightGradientRightColor"/>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_gradient">
+             <property name="orientation">
+              <enum>Qt::Orientation::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item>
           <widget class="QCheckBox" name="drawTitleBarSeparator">
            <property name="text">
             <string>Draw separator under titlebar</string>
@@ -1091,6 +1138,76 @@
             <string>Underline title</string>
            </property>
           </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer_inactiveGradient">
+           <property name="orientation">
+            <enum>Qt::Orientation::Vertical</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Policy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>5</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_inactive">
+           <property name="text">
+            <string>On inactive window:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_gradientOptionsInactive">
+           <property name="leftMargin">
+            <number>20</number>
+           </property>
+           <item>
+            <widget class="QCheckBox" name="drawTitleBarLeftToRightGradientInactive">
+             <property name="text">
+              <string>Use left-to-right custom gradient</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_gradientLeftInactive">
+             <property name="text">
+              <string>Left color:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="KColorButton" name="titleBarLeftToRightGradientLeftColorInactive"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_gradientRightInactive">
+             <property name="text">
+              <string>Right color:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="KColorButton" name="titleBarLeftToRightGradientRightColorInactive"/>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_gradientInactive">
+             <property name="orientation">
+              <enum>Qt::Orientation::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
          </item>
          <item>
           <spacer name="verticalSpacer_19">
@@ -1718,6 +1835,11 @@
    <extends>QWidget</extends>
    <header>config/breezeexceptionlistwidget.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>KColorButton</class>
+   <extends>QPushButton</extends>
+   <header>kcolorbutton.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>
