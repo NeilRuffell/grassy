@@ -1474,9 +1474,30 @@ void Decoration::paintTitleBar(QPainter *painter, const QRectF &repaintRegion)
 
     // render a linear gradient on title area
     if (c->isActive() && m_internalSettings->drawBackgroundGradient()) {
-        QLinearGradient gradient(0, 0, 0, m_titleRect.height());
-        gradient.setColorAt(0.0, titleBarColor.lighter(120));
-        gradient.setColorAt(0.8, titleBarColor);
+        if (m_internalSettings->drawTitleBarLeftToRightGradient()) {
+            QLinearGradient gradient(m_titleRect.left(), 0, m_titleRect.right(), 0);
+            QColor leftColor = m_internalSettings->titleBarLeftToRightGradientLeftColor();
+            QColor rightColor = m_internalSettings->titleBarLeftToRightGradientRightColor();
+            leftColor.setAlpha(titleBarColor.alpha());
+            rightColor.setAlpha(titleBarColor.alpha());
+            gradient.setColorAt(0.0, leftColor);
+            gradient.setColorAt(1.0, rightColor);
+            painter->setBrush(gradient);
+        } else {
+            QLinearGradient gradient(0, 0, 0, m_titleRect.height());
+            gradient.setColorAt(0.0, titleBarColor.lighter(120));
+            gradient.setColorAt(0.8, titleBarColor);
+            painter->setBrush(gradient);
+        }
+
+    } else if (!c->isActive() && m_internalSettings->drawTitleBarLeftToRightGradientInactive()) {
+        QLinearGradient gradient(m_titleRect.left(), 0, m_titleRect.right(), 0);
+        QColor leftColor = m_internalSettings->titleBarLeftToRightGradientLeftColorInactive();
+        QColor rightColor = m_internalSettings->titleBarLeftToRightGradientRightColorInactive();
+        leftColor.setAlpha(titleBarColor.alpha());
+        rightColor.setAlpha(titleBarColor.alpha());
+        gradient.setColorAt(0.0, leftColor);
+        gradient.setColorAt(1.0, rightColor);
         painter->setBrush(gradient);
 
     } else {

@@ -124,6 +124,7 @@ protected Q_SLOTS:
     //* update changed state
     virtual void updateChanged();
     void setEnabledAnimationsSpeed();
+    void setEnabledGradientOptions();
     void onIconsChanged();
     void systemIconGenerationButtonClicked();
     void buttonSizingButtonClicked();

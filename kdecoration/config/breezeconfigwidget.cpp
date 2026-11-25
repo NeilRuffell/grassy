@@ -161,6 +161,23 @@ ConfigWidget::ConfigWidget(QObject *parent, const KPluginMetaData &data, const Q
     connect(m_ui.drawBorderOnMaximizedWindows, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
     connect(m_ui.matchTitleBarToApplicationColor, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
     connect(m_ui.drawBackgroundGradient, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
+    connect(m_ui.drawBackgroundGradient, &QAbstractButton::toggled, this, &ConfigWidget::setEnabledGradientOptions);
+    connect(m_ui.drawTitleBarLeftToRightGradient, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
+    connect(m_ui.drawTitleBarLeftToRightGradient, &QAbstractButton::toggled, this, &ConfigWidget::setEnabledGradientOptions);
+    connect(m_ui.titleBarLeftToRightGradientLeftColor, &KColorButton::changed, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
+    connect(m_ui.titleBarLeftToRightGradientRightColor, &KColorButton::changed, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
+    connect(m_ui.drawTitleBarLeftToRightGradientInactive, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
+    connect(m_ui.drawTitleBarLeftToRightGradientInactive, &QAbstractButton::toggled, this, &ConfigWidget::setEnabledGradientOptions);
+    connect(m_ui.titleBarLeftToRightGradientLeftColorInactive,
+            &KColorButton::changed,
+            this,
+            &ConfigWidget::updateChanged,
+            Qt::ConnectionType::DirectConnection);
+    connect(m_ui.titleBarLeftToRightGradientRightColorInactive,
+            &KColorButton::changed,
+            this,
+            &ConfigWidget::updateChanged,
+            Qt::ConnectionType::DirectConnection);
     connect(m_ui.drawTitleBarSeparator, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
     connect(m_ui.boldTitle, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
     connect(m_ui.underlineTitle, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
@@ -214,6 +231,13 @@ void ConfigWidget::load()
     m_ui.boldButtonIcons->setCurrentIndex(m_internalSettings->boldButtonIcons());
     m_ui.matchTitleBarToApplicationColor->setChecked(m_internalSettings->matchTitleBarToApplicationColor());
     m_ui.drawBackgroundGradient->setChecked(m_internalSettings->drawBackgroundGradient());
+    m_ui.drawTitleBarLeftToRightGradient->setChecked(m_internalSettings->drawTitleBarLeftToRightGradient());
+    m_ui.titleBarLeftToRightGradientLeftColor->setColor(m_internalSettings->titleBarLeftToRightGradientLeftColor());
+    m_ui.titleBarLeftToRightGradientRightColor->setColor(m_internalSettings->titleBarLeftToRightGradientRightColor());
+    m_ui.drawTitleBarLeftToRightGradientInactive->setChecked(m_internalSettings->drawTitleBarLeftToRightGradientInactive());
+    m_ui.titleBarLeftToRightGradientLeftColorInactive->setColor(m_internalSettings->titleBarLeftToRightGradientLeftColorInactive());
+    m_ui.titleBarLeftToRightGradientRightColorInactive->setColor(m_internalSettings->titleBarLeftToRightGradientRightColorInactive());
+    setEnabledGradientOptions();
     m_ui.drawTitleBarSeparator->setChecked(m_internalSettings->drawTitleBarSeparator());
     m_ui.boldTitle->setChecked(m_internalSettings->boldTitle());
     m_ui.underlineTitle->setChecked(m_internalSettings->underlineTitle());
@@ -274,6 +298,12 @@ void ConfigWidget::saveMain(QString saveAsPresetName)
     m_internalSettings->setDrawBorderOnMaximizedWindows(m_ui.drawBorderOnMaximizedWindows->isChecked());
     m_internalSettings->setMatchTitleBarToApplicationColor(m_ui.matchTitleBarToApplicationColor->isChecked());
     m_internalSettings->setDrawBackgroundGradient(m_ui.drawBackgroundGradient->isChecked());
+    m_internalSettings->setDrawTitleBarLeftToRightGradient(m_ui.drawTitleBarLeftToRightGradient->isChecked());
+    m_internalSettings->setTitleBarLeftToRightGradientLeftColor(m_ui.titleBarLeftToRightGradientLeftColor->color());
+    m_internalSettings->setTitleBarLeftToRightGradientRightColor(m_ui.titleBarLeftToRightGradientRightColor->color());
+    m_internalSettings->setDrawTitleBarLeftToRightGradientInactive(m_ui.drawTitleBarLeftToRightGradientInactive->isChecked());
+    m_internalSettings->setTitleBarLeftToRightGradientLeftColorInactive(m_ui.titleBarLeftToRightGradientLeftColorInactive->color());
+    m_internalSettings->setTitleBarLeftToRightGradientRightColorInactive(m_ui.titleBarLeftToRightGradientRightColorInactive->color());
     m_internalSettings->setDrawTitleBarSeparator(m_ui.drawTitleBarSeparator->isChecked());
     m_internalSettings->setBoldTitle(m_ui.boldTitle->isChecked());
     m_internalSettings->setUnderlineTitle(m_ui.underlineTitle->isChecked());
@@ -348,6 +378,13 @@ void ConfigWidget::defaults()
     m_ui.drawBorderOnMaximizedWindows->setChecked(m_internalSettings->drawBorderOnMaximizedWindows());
     m_ui.matchTitleBarToApplicationColor->setChecked(m_internalSettings->matchTitleBarToApplicationColor());
     m_ui.drawBackgroundGradient->setChecked(m_internalSettings->drawBackgroundGradient());
+    m_ui.drawTitleBarLeftToRightGradient->setChecked(m_internalSettings->drawTitleBarLeftToRightGradient());
+    m_ui.titleBarLeftToRightGradientLeftColor->setColor(m_internalSettings->titleBarLeftToRightGradientLeftColor());
+    m_ui.titleBarLeftToRightGradientRightColor->setColor(m_internalSettings->titleBarLeftToRightGradientRightColor());
+    m_ui.drawTitleBarLeftToRightGradientInactive->setChecked(m_internalSettings->drawTitleBarLeftToRightGradientInactive());
+    m_ui.titleBarLeftToRightGradientLeftColorInactive->setColor(m_internalSettings->titleBarLeftToRightGradientLeftColorInactive());
+    m_ui.titleBarLeftToRightGradientRightColorInactive->setColor(m_internalSettings->titleBarLeftToRightGradientRightColorInactive());
+    setEnabledGradientOptions();
     m_ui.animationsEnabled->setChecked(m_internalSettings->animationsEnabled());
     m_ui.animationsSpeedRelativeSystem->setValue(m_internalSettings->animationsSpeedRelativeSystem());
     m_ui.drawTitleBarSeparator->setChecked(m_internalSettings->drawTitleBarSeparator());
@@ -475,6 +512,18 @@ void ConfigWidget::updateChanged()
         modified = true;
     else if (m_ui.drawBackgroundGradient->isChecked() != m_internalSettings->drawBackgroundGradient())
         modified = true;
+    else if (m_ui.drawTitleBarLeftToRightGradient->isChecked() != m_internalSettings->drawTitleBarLeftToRightGradient())
+        modified = true;
+    else if (m_ui.titleBarLeftToRightGradientLeftColor->color() != m_internalSettings->titleBarLeftToRightGradientLeftColor())
+        modified = true;
+    else if (m_ui.titleBarLeftToRightGradientRightColor->color() != m_internalSettings->titleBarLeftToRightGradientRightColor())
+        modified = true;
+    else if (m_ui.drawTitleBarLeftToRightGradientInactive->isChecked() != m_internalSettings->drawTitleBarLeftToRightGradientInactive())
+        modified = true;
+    else if (m_ui.titleBarLeftToRightGradientLeftColorInactive->color() != m_internalSettings->titleBarLeftToRightGradientLeftColorInactive())
+        modified = true;
+    else if (m_ui.titleBarLeftToRightGradientRightColorInactive->color() != m_internalSettings->titleBarLeftToRightGradientRightColorInactive())
+        modified = true;
     else if (qAbs(m_ui.cornerRadius->value() - m_internalSettings->windowCornerRadius()) > 0.001)
         modified = true;
     else if (m_ui.colorizeWindowOutlineWithButton->isChecked() != m_internalSettings->colorizeWindowOutlineWithButton())
@@ -528,6 +577,24 @@ void ConfigWidget::setEnabledAnimationsSpeed()
     m_ui.animationsSpeedLabel1->setEnabled(m_ui.animationsEnabled->isChecked());
     m_ui.animationsSpeedLabel2->setEnabled(m_ui.animationsEnabled->isChecked());
     m_ui.animationsSpeedLabel4->setEnabled(m_ui.animationsEnabled->isChecked());
+}
+
+void ConfigWidget::setEnabledGradientOptions()
+{
+    bool gradientEnabled = m_ui.drawBackgroundGradient->isChecked();
+    m_ui.drawTitleBarLeftToRightGradient->setEnabled(gradientEnabled);
+
+    bool leftToRightEnabled = gradientEnabled && m_ui.drawTitleBarLeftToRightGradient->isChecked();
+    m_ui.titleBarLeftToRightGradientLeftColor->setEnabled(leftToRightEnabled);
+    m_ui.titleBarLeftToRightGradientRightColor->setEnabled(leftToRightEnabled);
+    m_ui.label_gradientLeft->setEnabled(leftToRightEnabled);
+    m_ui.label_gradientRight->setEnabled(leftToRightEnabled);
+
+    bool leftToRightEnabledInactive = m_ui.drawTitleBarLeftToRightGradientInactive->isChecked();
+    m_ui.titleBarLeftToRightGradientLeftColorInactive->setEnabled(leftToRightEnabledInactive);
+    m_ui.titleBarLeftToRightGradientRightColorInactive->setEnabled(leftToRightEnabledInactive);
+    m_ui.label_gradientLeftInactive->setEnabled(leftToRightEnabledInactive);
+    m_ui.label_gradientRightInactive->setEnabled(leftToRightEnabledInactive);
 }
 
 void ConfigWidget::onIconsChanged()
