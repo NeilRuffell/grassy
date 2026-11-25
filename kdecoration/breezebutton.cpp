@@ -264,6 +264,16 @@ void Button::drawIcon(QPainter *painter) const
     if (!m_foregroundColor.isValid())
         return;
 
+    if (m_d->internalSettings()->classicGlyphs() && !isStandAlone() && !m_isGtkCsdButton
+        && m_d->buttonBackgroundType() == ButtonBackgroundType::Small) {
+        const qreal glyphSize = qMin(m_iconSize.width(), 10 * m_d->x11Scale());
+        const qreal offset = (smallButtonPaddedWidth - glyphSize) / 2;
+        if (ClassicRelief::glyph(painter, QRectF(offset, offset, glyphSize, glyphSize),
+                                static_cast<DecorationButtonType>(type()), isChecked(),
+                                m_foregroundColor, m_d->titleBarColor(), m_d->window()->isActive()))
+            return;
+    }
+
     // render the actual icon
     qreal iconWidth(m_iconSize.width());
 
@@ -1048,7 +1058,10 @@ void Button::paintSmallSizedButtonBackground(QPainter *painter) const
         if (shape == InternalSettings::EnumButtonShape::ShapeSmallRoundedSquare)
             radius = (m_d->internalSettings()->buttonCornerRadius() == InternalSettings::EnumButtonCornerRadius::Custom
                       ? m_d->internalSettings()->buttonCustomCornerRadius() : m_d->internalSettings()->windowCornerRadius()) * m_d->x11Scale();
-        ClassicRelief::button(painter, QRectF(0, 0, backgroundSize, backgroundSize),
+        const bool classicGeometry = m_d->internalSettings()->classicGeometry();
+        const qreal height = classicGeometry ? backgroundSize * 0.90 : backgroundSize;
+        const qreal width = classicGeometry ? qMin(m_smallButtonPaddedSize.width(), backgroundSize * 1.10) : backgroundSize;
+        ClassicRelief::button(painter, QRectF((backgroundSize - width) / 2, (backgroundSize - height) / 2, width, height),
                               radius, m_d->titleBarColor(), m_d->window()->isActive(), hovered(), isPressed());
         painter->restore();
         return;

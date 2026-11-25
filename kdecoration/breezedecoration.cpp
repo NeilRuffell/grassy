@@ -576,7 +576,7 @@ qreal Decoration::borderSize(bool bottom, qreal scale) const
     }
 
     if (borderSize > 0 && m_internalSettings && m_internalSettings->classicFrameBevel())
-        borderSize = m_internalSettings->classicFrameWidth();
+        return KDecoration3::snapToPixelGrid(m_internalSettings->classicFrameWidth() * m_x11Scale, scale);
     return KDecoration3::snapToPixelGrid(borderSize, scale);
 }
 
@@ -1052,6 +1052,8 @@ void Decoration::updateButtonsGeometry()
         bHeightNormal = captionHeight + (isTopEdge() ? buttonTopMargin : 0);
         // do not pixel grid snap icon offsets -- the icon gets snapped at the end anyway, and this keeps icons centred
         verticalIconOffsetNormal = (isTopEdge() ? buttonTopMargin : 0) + qreal(captionHeight - m_smallButtonPaddedSize);
+        if (m_internalSettings->classicGeometry())
+            verticalIconOffsetNormal = (isTopEdge() ? buttonTopMargin : 0) + qMax(qreal(0), (captionHeight - m_smallButtonPaddedSize) / 2);
 
         buttonSpacingLeft =
             KDecoration3::snapToPixelGrid(m_x11Scale * (isRightToLeft() ? m_internalSettings->buttonSpacingRight() : m_internalSettings->buttonSpacingLeft()),
@@ -1429,7 +1431,9 @@ void Decoration::calculateWindowShape()
                     windowCorners |= CornerTopRight;
                 }
             }
-            m_windowPath = GeometryTools::roundedPath(windowRect, windowCorners, m_scaledCornerRadius);
+            m_windowPath = m_internalSettings->classicGeometry()
+                ? ClassicRelief::steppedPath(windowRect, windowCorners, m_scaledCornerRadius)
+                : GeometryTools::roundedPath(windowRect, windowCorners, m_scaledCornerRadius);
 
         } else // maximized / no alpha
             m_windowPath.addRect(windowRect);
@@ -1440,7 +1444,10 @@ void Decoration::calculateWindowShape()
         if (isMaximized() || !s->isAlphaChannelSupported()) {
             m_windowPath.addRect(m_titleRect);
         } else {
-            m_windowPath.addRoundedRect(m_titleRect, m_scaledCornerRadius, m_scaledCornerRadius);
+            if (m_internalSettings->classicGeometry())
+                m_windowPath = ClassicRelief::steppedPath(m_titleRect, AllCorners, m_scaledCornerRadius);
+            else
+                m_windowPath.addRoundedRect(m_titleRect, m_scaledCornerRadius, m_scaledCornerRadius);
         }
     }
 }
@@ -1457,7 +1464,10 @@ void Decoration::calculateTitleBarShape()
     if (isMaximized() || !s->isAlphaChannelSupported()) {
         m_titleBarPath.addRect(m_titleRect);
     } else if (c->isShaded()) {
-        m_titleBarPath.addRoundedRect(m_titleRect, m_scaledCornerRadius, m_scaledCornerRadius);
+        if (m_internalSettings->classicGeometry())
+            m_titleBarPath = m_windowPath;
+        else
+            m_titleBarPath.addRoundedRect(m_titleRect, m_scaledCornerRadius, m_scaledCornerRadius);
     } else {
         Corners titleBarCorners;
         if (!isTopEdge()) {
@@ -1468,7 +1478,9 @@ void Decoration::calculateTitleBarShape()
                 titleBarCorners |= CornerTopRight;
             }
         }
-        m_titleBarPath = GeometryTools::roundedPath(m_titleRect, titleBarCorners, m_scaledCornerRadius);
+        m_titleBarPath = m_internalSettings->classicGeometry()
+            ? ClassicRelief::steppedPath(m_titleRect, titleBarCorners, m_scaledCornerRadius)
+            : GeometryTools::roundedPath(m_titleRect, titleBarCorners, m_scaledCornerRadius);
     }
 }
 
@@ -1561,7 +1573,9 @@ void Decoration::paintTitleBar(QPainter *painter, const QRectF &repaintRegion)
 
     // draw caption
     QFont font = s->font();
-    if (m_internalSettings->boldTitle() && (c->isActive() || m_internalSettings->classicTitleShadow())) {
+    if (m_internalSettings->boldTitle() && m_internalSettings->classicGeometry()) {
+        font.setWeight(QFont::Bold);
+    } else if (m_internalSettings->boldTitle() && (c->isActive() || m_internalSettings->classicTitleShadow())) {
         QFont::Weight weight = font.weight();
         if (weight < QFont::Black) {
             weight = (weight >= QFont::DemiBold) ? QFont::ExtraBold : QFont::DemiBold;
@@ -1618,6 +1632,13 @@ void Decoration::calculateIconSizes()
     qreal baseSize = settings()->gridUnit(); // 10 on Wayland
     qreal basePaddingSize = m_smallSpacing; // 2 on Wayland
 
+    if (m_internalSettings->classicGeometry() && m_buttonBackgroundType == ButtonBackgroundType::Small) {
+        // 24 logical-pixel hit area, 16px menu icon, 20px button surface.
+        m_smallButtonPaddedSize = KDecoration3::snapToPixelGrid(24 * m_x11Scale, scale);
+        m_iconSize = KDecoration3::snapToPixelGrid(16 * m_x11Scale, scale);
+        m_smallButtonBackgroundSize = KDecoration3::snapToPixelGrid(20 * m_x11Scale, scale);
+        return;
+    }
     if (m_internalSettings->buttonIconStyle() == InternalSettings::EnumButtonIconStyle::StyleSystemIconTheme) {
         switch (m_internalSettings->systemIconSize()) {
         case InternalSettings::EnumSystemIconSize::SystemIcon8: // 10, 8 on Wayland

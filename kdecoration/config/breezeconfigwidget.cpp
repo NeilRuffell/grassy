@@ -166,6 +166,8 @@ ConfigWidget::ConfigWidget(QObject *parent, const KPluginMetaData &data, const Q
     connect(m_ui.classicButtonBevel, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
     connect(m_ui.classicFrameBevel, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
     connect(m_ui.classicTitleShadow, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
+    connect(m_ui.classicGlyphs, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
+    connect(m_ui.classicGeometry, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
     connect(m_ui.classicCustomColors, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
     connect(m_ui.classicFrameWidth, &QSpinBox::valueChanged, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
     connect(m_ui.classicActiveColor, &KColorButton::changed, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
@@ -248,6 +250,8 @@ void ConfigWidget::load()
     m_ui.classicButtonBevel->setChecked(m_internalSettings->classicButtonBevel());
     m_ui.classicFrameBevel->setChecked(m_internalSettings->classicFrameBevel());
     m_ui.classicTitleShadow->setChecked(m_internalSettings->classicTitleShadow());
+    m_ui.classicGlyphs->setChecked(m_internalSettings->classicGlyphs());
+    m_ui.classicGeometry->setChecked(m_internalSettings->classicGeometry());
     m_ui.classicCustomColors->setChecked(m_internalSettings->classicCustomColors());
     m_ui.classicFrameWidth->setValue(m_internalSettings->classicFrameWidth());
     m_ui.classicActiveColor->setColor(m_internalSettings->classicActiveColor());
@@ -327,6 +331,8 @@ void ConfigWidget::saveMain(QString saveAsPresetName)
     m_internalSettings->setClassicButtonBevel(m_ui.classicButtonBevel->isChecked());
     m_internalSettings->setClassicFrameBevel(m_ui.classicFrameBevel->isChecked());
     m_internalSettings->setClassicTitleShadow(m_ui.classicTitleShadow->isChecked());
+    m_internalSettings->setClassicGlyphs(m_ui.classicGlyphs->isChecked());
+    m_internalSettings->setClassicGeometry(m_ui.classicGeometry->isChecked());
     m_internalSettings->setClassicCustomColors(m_ui.classicCustomColors->isChecked());
     m_internalSettings->setClassicFrameWidth(m_ui.classicFrameWidth->value());
     m_internalSettings->setClassicActiveColor(m_ui.classicActiveColor->color());
@@ -419,6 +425,8 @@ void ConfigWidget::defaults()
     m_ui.classicButtonBevel->setChecked(m_internalSettings->classicButtonBevel());
     m_ui.classicFrameBevel->setChecked(m_internalSettings->classicFrameBevel());
     m_ui.classicTitleShadow->setChecked(m_internalSettings->classicTitleShadow());
+    m_ui.classicGlyphs->setChecked(m_internalSettings->classicGlyphs());
+    m_ui.classicGeometry->setChecked(m_internalSettings->classicGeometry());
     m_ui.classicCustomColors->setChecked(m_internalSettings->classicCustomColors());
     m_ui.classicFrameWidth->setValue(m_internalSettings->classicFrameWidth());
     m_ui.classicActiveColor->setColor(m_internalSettings->classicActiveColor());
@@ -569,6 +577,10 @@ void ConfigWidget::updateChanged()
     else if (m_ui.classicFrameBevel->isChecked() != m_internalSettings->classicFrameBevel())
         modified = true;
     else if (m_ui.classicTitleShadow->isChecked() != m_internalSettings->classicTitleShadow())
+        modified = true;
+    else if (m_ui.classicGlyphs->isChecked() != m_internalSettings->classicGlyphs())
+        modified = true;
+    else if (m_ui.classicGeometry->isChecked() != m_internalSettings->classicGeometry())
         modified = true;
     else if (m_ui.classicCustomColors->isChecked() != m_internalSettings->classicCustomColors())
         modified = true;

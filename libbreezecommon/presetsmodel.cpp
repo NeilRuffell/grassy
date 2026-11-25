@@ -373,7 +373,7 @@ void PresetsModel::importBundledPresets(KConfig *presetsConfig)
     if (presetsConfig->hasGroup("Global")) {
         KConfigGroup globalGroup = presetsConfig->group("Global");
         if (globalGroup.hasKey("BundledWindecoPresetsImportedVersion")) {
-            if (globalGroup.readEntry("BundledWindecoPresetsImportedVersion") == klassyLongVersion() + QStringLiteral(":classic-relief-1")) {
+            if (globalGroup.readEntry("BundledWindecoPresetsImportedVersion") == klassyLongVersion() + QStringLiteral(":classic-relief-2")) {
                 return;
             }
         }
@@ -411,7 +411,7 @@ void PresetsModel::importBundledPresets(KConfig *presetsConfig)
     }
 
     KConfigGroup globalGroup = presetsConfig->group("Global");
-    globalGroup.writeEntry("BundledWindecoPresetsImportedVersion", klassyLongVersion() + QStringLiteral(":classic-relief-1"));
+    globalGroup.writeEntry("BundledWindecoPresetsImportedVersion", klassyLongVersion() + QStringLiteral(":classic-relief-2"));
     presetsConfig->sync();
 }
 }

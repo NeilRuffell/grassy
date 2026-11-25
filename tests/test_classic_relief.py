@@ -20,7 +20,7 @@ class ClassicReliefTests(unittest.TestCase):
         ui = ET.parse(UI)
         config = CONFIG.read_text(encoding="utf-8")
         classic = [e for e in self.entries if e.attrib["name"].startswith("Classic")]
-        self.assertEqual(len(classic), 12)
+        self.assertEqual(len(classic), 14)
         for entry in classic:
             name = entry.attrib["name"]
             field = name[0].lower() + name[1:]
@@ -29,6 +29,16 @@ class ClassicReliefTests(unittest.TestCase):
             self.assertIsNotNone(ui.find(f".//widget[@name='{field}']"))
             self.assertIn(f"m_internalSettings->{field}()", config)
             self.assertIn(f"m_internalSettings->set{name}(", config)
+
+    def test_classic_renderer_uses_procedural_primitives(self):
+        renderer = (ROOT / "kdecoration/classicrelief.h").read_text(encoding="utf-8")
+        for forbidden in (".png", "QPixmap", "QImage", "QBitmap", "QSvgRenderer", "drawPixmap", "drawImage"):
+            self.assertNotIn(forbidden, renderer)
+        for required in ("QLinearGradient", "QPainterPath", "steppedPath", "glyph", "fillPath"):
+            self.assertIn(required, renderer)
+        for source, method in (("breezedecoration.cpp", "ClassicRelief::steppedPath"),
+                               ("breezebutton.cpp", "ClassicRelief::glyph")):
+            self.assertIn(method, (ROOT / "kdecoration" / source).read_text(encoding="utf-8"))
 
     def test_human_presets_use_valid_keys_and_enums(self):
         keys = {k: None for k in ("KwinBorderSize", "KwinButtonsOnLeft", "KwinButtonsOnRight")}
@@ -55,7 +65,8 @@ class ClassicReliefTests(unittest.TestCase):
                     self.assertIn(value, [c.attrib["name"] for c in entry.findall("k:choices/k:choice", NS)])
             for name in ("ClassicGradientActive", "ClassicGradientInactive",
                          "ClassicButtonBevel", "ClassicFrameBevel",
-                         "ClassicTitleShadow", "ClassicCustomColors"):
+                         "ClassicTitleShadow", "ClassicCustomColors",
+                         "ClassicGeometry", "ClassicGlyphs"):
                 self.assertTrue(group.getboolean(name))
             self.assertEqual(group.getint("ClassicFrameWidth"), 5)
 

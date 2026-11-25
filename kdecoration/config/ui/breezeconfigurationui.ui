@@ -1242,6 +1242,8 @@
            <item row="5" column="1"><widget class="KColorButton" name="classicActiveText"></widget></item>
            <item row="5" column="2"><widget class="QLabel" name="labelClassicInactiveText"><property name="text"><string>Inactive text</string></property></widget></item>
            <item row="5" column="3"><widget class="KColorButton" name="classicInactiveText"></widget></item>
+           <item row="6" column="0" colspan="2"><widget class="QCheckBox" name="classicGeometry"><property name="text"><string>Stepped corners and compact geometry</string></property><property name="toolTip"><string>Use the classic stepped corner silhouette and 24-pixel minimum titlebar for small buttons.</string></property></widget></item>
+           <item row="6" column="2" colspan="2"><widget class="QCheckBox" name="classicGlyphs"><property name="text"><string>Classic vector button glyphs</string></property><property name="toolTip"><string>Draw minimize, maximize, restore and close symbols using scalable vector paths, without image assets.</string></property></widget></item>
            </layout>
           </widget>
          </item>
