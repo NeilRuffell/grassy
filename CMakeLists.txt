@@ -1,4 +1,42 @@
 cmake_minimum_required(VERSION 3.16)
+
+# Keep upstream-shaped sources for rebases, but never build or install them
+# under Klassy's identity. The generated subproject has Grassy-only names.
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.grassy-generated")
+    project(grassy LANGUAGES C CXX)
+    if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
+        message(FATAL_ERROR "Use an out-of-source Grassy build (cmake -S . -B build-grassy).")
+    endif()
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    set(GRASSY_STAGE "${CMAKE_CURRENT_BINARY_DIR}/grassy-source")
+    file(GLOB_RECURSE GRASSY_INPUTS LIST_DIRECTORIES false CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/*"
+        "${CMAKE_CURRENT_SOURCE_DIR}/colors/*"
+        "${CMAKE_CURRENT_SOURCE_DIR}/desktoptheme/*"
+        "${CMAKE_CURRENT_SOURCE_DIR}/icons/*"
+        "${CMAKE_CURRENT_SOURCE_DIR}/kdecoration/*"
+        "${CMAKE_CURRENT_SOURCE_DIR}/kstyle/*"
+        "${CMAKE_CURRENT_SOURCE_DIR}/layout-templates/*"
+        "${CMAKE_CURRENT_SOURCE_DIR}/libbreezecommon/*"
+        "${CMAKE_CURRENT_SOURCE_DIR}/look-and-feel/*"
+        "${CMAKE_CURRENT_SOURCE_DIR}/po/*"
+        "${CMAKE_CURRENT_SOURCE_DIR}/LICENSES/*")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+        ${GRASSY_INPUTS}
+        "${CMAKE_CURRENT_SOURCE_DIR}/KlassyConfig.cmake.in"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tools/stage_grassy.py")
+    execute_process(
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tools/stage_grassy.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}" "${GRASSY_STAGE}"
+        RESULT_VARIABLE GRASSY_STAGE_RESULT
+    )
+    if(NOT GRASSY_STAGE_RESULT STREQUAL "0")
+        message(FATAL_ERROR "Grassy source isolation failed: ${GRASSY_STAGE_RESULT}")
+    endif()
+    add_subdirectory("${GRASSY_STAGE}" "${CMAKE_CURRENT_BINARY_DIR}/grassy-build")
+    return()
+endif()
+
 project(klassy)
 set(PROJECT_VERSION "6.7.3")
 set(PROJECT_VERSION_MAJOR 6)
