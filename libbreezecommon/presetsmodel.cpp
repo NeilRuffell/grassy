@@ -373,7 +373,7 @@ void PresetsModel::importBundledPresets(KConfig *presetsConfig)
     if (presetsConfig->hasGroup("Global")) {
         KConfigGroup globalGroup = presetsConfig->group("Global");
         if (globalGroup.hasKey("BundledWindecoPresetsImportedVersion")) {
-            if (globalGroup.readEntry("BundledWindecoPresetsImportedVersion") == klassyLongVersion()) {
+            if (globalGroup.readEntry("BundledWindecoPresetsImportedVersion") == klassyLongVersion() + QStringLiteral(":classic-relief-1")) {
                 return;
             }
         }
@@ -398,6 +398,9 @@ void PresetsModel::importBundledPresets(KConfig *presetsConfig)
                 presetFile = libraryPath + "/" + presetFile; // set absolute full path
                 QString presetName;
                 QString error;
+                // Do not replace a user-modified preset with a bundled one.
+                if (isPresetFromFilePresent(presetsConfig, presetFile, presetName))
+                    continue;
 
                 PresetsErrorFlag importErrors = PresetsModel::importPreset(presetsConfig, presetFile, presetName, error, true, true);
                 if (importErrors != PresetsErrorFlag::None) {
@@ -408,7 +411,7 @@ void PresetsModel::importBundledPresets(KConfig *presetsConfig)
     }
 
     KConfigGroup globalGroup = presetsConfig->group("Global");
-    globalGroup.writeEntry("BundledWindecoPresetsImportedVersion", klassyLongVersion());
+    globalGroup.writeEntry("BundledWindecoPresetsImportedVersion", klassyLongVersion() + QStringLiteral(":classic-relief-1"));
     presetsConfig->sync();
 }
 }

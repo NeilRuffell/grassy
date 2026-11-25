@@ -134,6 +134,56 @@
         <default>192, 192, 192</default>
     </entry>
 
+    <entry name="ClassicGradientActive" type = "Bool">
+        <default>false</default>
+    </entry>
+
+    <entry name="ClassicGradientInactive" type = "Bool">
+        <default>false</default>
+    </entry>
+
+    <entry name="ClassicButtonBevel" type = "Bool">
+        <default>false</default>
+    </entry>
+
+    <entry name="ClassicFrameBevel" type = "Bool">
+        <default>false</default>
+    </entry>
+
+    <entry name="ClassicTitleShadow" type = "Bool">
+        <default>false</default>
+    </entry>
+
+    <entry name="ClassicCustomColors" type = "Bool">
+        <default>false</default>
+    </entry>
+
+    <entry name="ClassicFrameWidth" type = "Int">
+        <default>5</default>
+        <min>1</min>
+        <max>16</max>
+    </entry>
+
+    <entry name="ClassicActiveColor" type = "Color">
+        <default>143,95,74</default>
+    </entry>
+
+    <entry name="ClassicInactiveColor" type = "Color">
+        <default>230,221,213</default>
+    </entry>
+
+    <entry name="ClassicFrameColor" type = "Color">
+        <default>230,221,213</default>
+    </entry>
+
+    <entry name="ClassicActiveText" type = "Color">
+        <default>255,255,255</default>
+    </entry>
+
+    <entry name="ClassicInactiveText" type = "Color">
+        <default>108,98,88</default>
+    </entry>
+
     <entry name="DrawTitleBarSeparator" type = "Bool">
         <default>true</default>
     </entry>

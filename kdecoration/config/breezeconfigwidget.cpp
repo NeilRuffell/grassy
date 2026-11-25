@@ -161,6 +161,18 @@ ConfigWidget::ConfigWidget(QObject *parent, const KPluginMetaData &data, const Q
     connect(m_ui.drawBorderOnMaximizedWindows, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
     connect(m_ui.matchTitleBarToApplicationColor, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
     connect(m_ui.drawBackgroundGradient, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
+    connect(m_ui.classicGradientActive, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
+    connect(m_ui.classicGradientInactive, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
+    connect(m_ui.classicButtonBevel, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
+    connect(m_ui.classicFrameBevel, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
+    connect(m_ui.classicTitleShadow, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
+    connect(m_ui.classicCustomColors, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
+    connect(m_ui.classicFrameWidth, &QSpinBox::valueChanged, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
+    connect(m_ui.classicActiveColor, &KColorButton::changed, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
+    connect(m_ui.classicInactiveColor, &KColorButton::changed, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
+    connect(m_ui.classicFrameColor, &KColorButton::changed, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
+    connect(m_ui.classicActiveText, &KColorButton::changed, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
+    connect(m_ui.classicInactiveText, &KColorButton::changed, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
     connect(m_ui.drawBackgroundGradient, &QAbstractButton::toggled, this, &ConfigWidget::setEnabledGradientOptions);
     connect(m_ui.drawTitleBarLeftToRightGradient, &QAbstractButton::toggled, this, &ConfigWidget::updateChanged, Qt::ConnectionType::DirectConnection);
     connect(m_ui.drawTitleBarLeftToRightGradient, &QAbstractButton::toggled, this, &ConfigWidget::setEnabledGradientOptions);
@@ -231,6 +243,18 @@ void ConfigWidget::load()
     m_ui.boldButtonIcons->setCurrentIndex(m_internalSettings->boldButtonIcons());
     m_ui.matchTitleBarToApplicationColor->setChecked(m_internalSettings->matchTitleBarToApplicationColor());
     m_ui.drawBackgroundGradient->setChecked(m_internalSettings->drawBackgroundGradient());
+    m_ui.classicGradientActive->setChecked(m_internalSettings->classicGradientActive());
+    m_ui.classicGradientInactive->setChecked(m_internalSettings->classicGradientInactive());
+    m_ui.classicButtonBevel->setChecked(m_internalSettings->classicButtonBevel());
+    m_ui.classicFrameBevel->setChecked(m_internalSettings->classicFrameBevel());
+    m_ui.classicTitleShadow->setChecked(m_internalSettings->classicTitleShadow());
+    m_ui.classicCustomColors->setChecked(m_internalSettings->classicCustomColors());
+    m_ui.classicFrameWidth->setValue(m_internalSettings->classicFrameWidth());
+    m_ui.classicActiveColor->setColor(m_internalSettings->classicActiveColor());
+    m_ui.classicInactiveColor->setColor(m_internalSettings->classicInactiveColor());
+    m_ui.classicFrameColor->setColor(m_internalSettings->classicFrameColor());
+    m_ui.classicActiveText->setColor(m_internalSettings->classicActiveText());
+    m_ui.classicInactiveText->setColor(m_internalSettings->classicInactiveText());
     m_ui.drawTitleBarLeftToRightGradient->setChecked(m_internalSettings->drawTitleBarLeftToRightGradient());
     m_ui.titleBarLeftToRightGradientLeftColor->setColor(m_internalSettings->titleBarLeftToRightGradientLeftColor());
     m_ui.titleBarLeftToRightGradientRightColor->setColor(m_internalSettings->titleBarLeftToRightGradientRightColor());
@@ -298,6 +322,18 @@ void ConfigWidget::saveMain(QString saveAsPresetName)
     m_internalSettings->setDrawBorderOnMaximizedWindows(m_ui.drawBorderOnMaximizedWindows->isChecked());
     m_internalSettings->setMatchTitleBarToApplicationColor(m_ui.matchTitleBarToApplicationColor->isChecked());
     m_internalSettings->setDrawBackgroundGradient(m_ui.drawBackgroundGradient->isChecked());
+    m_internalSettings->setClassicGradientActive(m_ui.classicGradientActive->isChecked());
+    m_internalSettings->setClassicGradientInactive(m_ui.classicGradientInactive->isChecked());
+    m_internalSettings->setClassicButtonBevel(m_ui.classicButtonBevel->isChecked());
+    m_internalSettings->setClassicFrameBevel(m_ui.classicFrameBevel->isChecked());
+    m_internalSettings->setClassicTitleShadow(m_ui.classicTitleShadow->isChecked());
+    m_internalSettings->setClassicCustomColors(m_ui.classicCustomColors->isChecked());
+    m_internalSettings->setClassicFrameWidth(m_ui.classicFrameWidth->value());
+    m_internalSettings->setClassicActiveColor(m_ui.classicActiveColor->color());
+    m_internalSettings->setClassicInactiveColor(m_ui.classicInactiveColor->color());
+    m_internalSettings->setClassicFrameColor(m_ui.classicFrameColor->color());
+    m_internalSettings->setClassicActiveText(m_ui.classicActiveText->color());
+    m_internalSettings->setClassicInactiveText(m_ui.classicInactiveText->color());
     m_internalSettings->setDrawTitleBarLeftToRightGradient(m_ui.drawTitleBarLeftToRightGradient->isChecked());
     m_internalSettings->setTitleBarLeftToRightGradientLeftColor(m_ui.titleBarLeftToRightGradientLeftColor->color());
     m_internalSettings->setTitleBarLeftToRightGradientRightColor(m_ui.titleBarLeftToRightGradientRightColor->color());
@@ -378,6 +414,18 @@ void ConfigWidget::defaults()
     m_ui.drawBorderOnMaximizedWindows->setChecked(m_internalSettings->drawBorderOnMaximizedWindows());
     m_ui.matchTitleBarToApplicationColor->setChecked(m_internalSettings->matchTitleBarToApplicationColor());
     m_ui.drawBackgroundGradient->setChecked(m_internalSettings->drawBackgroundGradient());
+    m_ui.classicGradientActive->setChecked(m_internalSettings->classicGradientActive());
+    m_ui.classicGradientInactive->setChecked(m_internalSettings->classicGradientInactive());
+    m_ui.classicButtonBevel->setChecked(m_internalSettings->classicButtonBevel());
+    m_ui.classicFrameBevel->setChecked(m_internalSettings->classicFrameBevel());
+    m_ui.classicTitleShadow->setChecked(m_internalSettings->classicTitleShadow());
+    m_ui.classicCustomColors->setChecked(m_internalSettings->classicCustomColors());
+    m_ui.classicFrameWidth->setValue(m_internalSettings->classicFrameWidth());
+    m_ui.classicActiveColor->setColor(m_internalSettings->classicActiveColor());
+    m_ui.classicInactiveColor->setColor(m_internalSettings->classicInactiveColor());
+    m_ui.classicFrameColor->setColor(m_internalSettings->classicFrameColor());
+    m_ui.classicActiveText->setColor(m_internalSettings->classicActiveText());
+    m_ui.classicInactiveText->setColor(m_internalSettings->classicInactiveText());
     m_ui.drawTitleBarLeftToRightGradient->setChecked(m_internalSettings->drawTitleBarLeftToRightGradient());
     m_ui.titleBarLeftToRightGradientLeftColor->setColor(m_internalSettings->titleBarLeftToRightGradientLeftColor());
     m_ui.titleBarLeftToRightGradientRightColor->setColor(m_internalSettings->titleBarLeftToRightGradientRightColor());
@@ -511,6 +559,30 @@ void ConfigWidget::updateChanged()
     else if (m_ui.matchTitleBarToApplicationColor->isChecked() != m_internalSettings->matchTitleBarToApplicationColor())
         modified = true;
     else if (m_ui.drawBackgroundGradient->isChecked() != m_internalSettings->drawBackgroundGradient())
+        modified = true;
+    else if (m_ui.classicGradientActive->isChecked() != m_internalSettings->classicGradientActive())
+        modified = true;
+    else if (m_ui.classicGradientInactive->isChecked() != m_internalSettings->classicGradientInactive())
+        modified = true;
+    else if (m_ui.classicButtonBevel->isChecked() != m_internalSettings->classicButtonBevel())
+        modified = true;
+    else if (m_ui.classicFrameBevel->isChecked() != m_internalSettings->classicFrameBevel())
+        modified = true;
+    else if (m_ui.classicTitleShadow->isChecked() != m_internalSettings->classicTitleShadow())
+        modified = true;
+    else if (m_ui.classicCustomColors->isChecked() != m_internalSettings->classicCustomColors())
+        modified = true;
+    else if (m_ui.classicFrameWidth->value() != m_internalSettings->classicFrameWidth())
+        modified = true;
+    else if (m_ui.classicActiveColor->color() != m_internalSettings->classicActiveColor())
+        modified = true;
+    else if (m_ui.classicInactiveColor->color() != m_internalSettings->classicInactiveColor())
+        modified = true;
+    else if (m_ui.classicFrameColor->color() != m_internalSettings->classicFrameColor())
+        modified = true;
+    else if (m_ui.classicActiveText->color() != m_internalSettings->classicActiveText())
+        modified = true;
+    else if (m_ui.classicInactiveText->color() != m_internalSettings->classicInactiveText())
         modified = true;
     else if (m_ui.drawTitleBarLeftToRightGradient->isChecked() != m_internalSettings->drawTitleBarLeftToRightGradient())
         modified = true;

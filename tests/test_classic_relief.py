@@ -1,0 +1,64 @@
+"""Check the source-level classic-relief settings and bundled presets."""
+import configparser
+from pathlib import Path
+import re
+import unittest
+import xml.etree.ElementTree as ET
+
+ROOT = Path(__file__).resolve().parents[1]
+SCHEMA = ROOT / "libbreezecommon/breezesettingsdata.kcfg"
+UI = ROOT / "kdecoration/config/ui/breezeconfigurationui.ui"
+CONFIG = ROOT / "kdecoration/config/breezeconfigwidget.cpp"
+NS = {"k": "http://www.kde.org/standards/kcfg/1.0"}
+
+
+class ClassicReliefTests(unittest.TestCase):
+    def setUp(self):
+        self.entries = ET.parse(SCHEMA).findall(".//k:entry", NS)
+
+    def test_classic_settings_are_opt_in_and_wired(self):
+        ui = ET.parse(UI)
+        config = CONFIG.read_text(encoding="utf-8")
+        classic = [e for e in self.entries if e.attrib["name"].startswith("Classic")]
+        self.assertEqual(len(classic), 12)
+        for entry in classic:
+            name = entry.attrib["name"]
+            field = name[0].lower() + name[1:]
+            if entry.attrib["type"] == "Bool":
+                self.assertEqual(entry.find("k:default", NS).text, "false")
+            self.assertIsNotNone(ui.find(f".//widget[@name='{field}']"))
+            self.assertIn(f"m_internalSettings->{field}()", config)
+            self.assertIn(f"m_internalSettings->set{name}(", config)
+
+    def test_human_presets_use_valid_keys_and_enums(self):
+        keys = {k: None for k in ("KwinBorderSize", "KwinButtonsOnLeft", "KwinButtonsOnRight")}
+        for entry in self.entries:
+            name = entry.attrib["name"]
+            names = [name]
+            if "$(" in name:
+                names = [
+                    re.sub(r"\$\([^)]*\)", value.text, name)
+                    for value in entry.findall("k:parameter/k:values/k:value", NS)
+                ]
+            for key in names:
+                keys[key] = entry
+        for suffix in ("Jaunty", "Orange"):
+            path = ROOT / f"kdecoration/config/presets/Human_{suffix}.klpw"
+            preset = configparser.ConfigParser(interpolation=None)
+            preset.optionxform = str
+            preset.read(path, encoding="utf-8")
+            group = preset[f"Windeco Preset Human {suffix}"]
+            for key, value in group.items():
+                self.assertIn(key, keys, f"{suffix}: {key}")
+                entry = keys[key]
+                if entry is not None and entry.attrib["type"] == "Enum":
+                    self.assertIn(value, [c.attrib["name"] for c in entry.findall("k:choices/k:choice", NS)])
+            for name in ("ClassicGradientActive", "ClassicGradientInactive",
+                         "ClassicButtonBevel", "ClassicFrameBevel",
+                         "ClassicTitleShadow", "ClassicCustomColors"):
+                self.assertTrue(group.getboolean(name))
+            self.assertEqual(group.getint("ClassicFrameWidth"), 5)
+
+
+if __name__ == "__main__":
+    unittest.main()

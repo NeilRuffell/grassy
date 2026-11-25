@@ -15,6 +15,7 @@
 
 #include "breezeboxshadowrenderer.h"
 #include "breezebutton.h"
+#include "classicrelief.h"
 #include "breezesettingsprovider.h"
 #include "dbusupdatenotifier.h"
 #include "geometrytools.h"
@@ -195,6 +196,14 @@ QColor Decoration::titleBarColor(bool returnNonAnimatedColor) const
 
     QColor activeTitleBarColor = m_decorationColors->active()->titleBarBase;
     QColor inactiveTitlebarColor = m_decorationColors->inactive()->titleBarBase;
+    if (m_internalSettings->classicCustomColors()) {
+        const int activeAlpha = activeTitleBarColor.alpha();
+        const int inactiveAlpha = inactiveTitlebarColor.alpha();
+        activeTitleBarColor = m_internalSettings->classicActiveColor();
+        inactiveTitlebarColor = m_internalSettings->classicInactiveColor();
+        activeTitleBarColor.setAlpha(activeAlpha);
+        inactiveTitlebarColor.setAlpha(inactiveAlpha);
+    }
     if (m_internalSettings->opaqueTitleBar() || (m_internalSettings->opaqueMaximizedTitleBars() && c->isMaximized())) {
         activeTitleBarColor.setAlpha(255);
         inactiveTitlebarColor.setAlpha(255);
@@ -275,6 +284,13 @@ QColor Decoration::overriddenOutlineColorAnimateOut(const QColor &destinationCol
 QColor Decoration::fontColor(bool returnNonAnimatedColor) const
 {
     auto c = window();
+    if (m_internalSettings->classicCustomColors()) {
+        const QColor active = m_internalSettings->classicActiveText();
+        const QColor inactive = m_internalSettings->classicInactiveText();
+        if (m_animation->state() == QAbstractAnimation::Running && !returnNonAnimatedColor)
+            return KColorUtils::mix(inactive, active, m_animation->currentValue().toReal());
+        return c->isActive() ? active : inactive;
+    }
 
     if (m_animation->state() == QAbstractAnimation::Running && !returnNonAnimatedColor) {
         return KColorUtils::mix(m_decorationColors->inactive()->titleBarText, m_decorationColors->active()->titleBarText, m_animation->currentValue().toReal());
@@ -559,6 +575,8 @@ qreal Decoration::borderSize(bool bottom, qreal scale) const
         }
     }
 
+    if (borderSize > 0 && m_internalSettings && m_internalSettings->classicFrameBevel())
+        borderSize = m_internalSettings->classicFrameWidth();
     return KDecoration3::snapToPixelGrid(borderSize, scale);
 }
 
@@ -1355,8 +1373,12 @@ void Decoration::paint(QPainter *painter, const QRectF &repaintRegion)
         } else
             windowBorderColor = c->color(c->isActive() ? ColorGroup::Active : ColorGroup::Inactive, ColorRole::Frame);
 
+        if (m_internalSettings->classicCustomColors() && m_internalSettings->classicFrameBevel())
+            windowBorderColor = m_internalSettings->classicFrameColor();
         painter->setBrush(windowBorderColor);
         painter->drawPath(m_windowPath);
+        if (m_internalSettings->classicFrameBevel())
+            ClassicRelief::frame(painter, QRectF(rect()), m_windowPath, windowBorderColor, borderLeft(), borderRight(), borderBottom());
         //
         painter->restore();
     }
@@ -1366,7 +1388,7 @@ void Decoration::paint(QPainter *painter, const QRectF &repaintRegion)
         paintTitleBar(painter, repaintRegion);
     }
 
-    if (hasBorders() && !s->isAlphaChannelSupported()) {
+    if (hasBorders() && !s->isAlphaChannelSupported() && !m_internalSettings->classicFrameBevel()) {
         painter->save();
         painter->setRenderHint(QPainter::Antialiasing, false);
         painter->setBrush(Qt::NoBrush);
@@ -1472,8 +1494,10 @@ void Decoration::paintTitleBar(QPainter *painter, const QRectF &repaintRegion)
         painter->setCompositionMode(QPainter::CompositionMode_Source);
     }
 
-    // render a linear gradient on title area
-    if (c->isActive() && m_internalSettings->drawBackgroundGradient()) {
+    const bool classicGradient = c->isActive() ? m_internalSettings->classicGradientActive() : m_internalSettings->classicGradientInactive();
+    if (classicGradient) {
+        ClassicRelief::titlebar(painter, m_titleRect, m_titleBarPath, titleBarColor, c->isActive(), isLeftEdge(), isRightEdge());
+    } else if (c->isActive() && m_internalSettings->drawBackgroundGradient()) {
         if (m_internalSettings->drawTitleBarLeftToRightGradient()) {
             QLinearGradient gradient(m_titleRect.left(), 0, m_titleRect.right(), 0);
             QColor leftColor = m_internalSettings->titleBarLeftToRightGradientLeftColor();
@@ -1506,7 +1530,8 @@ void Decoration::paintTitleBar(QPainter *painter, const QRectF &repaintRegion)
 
     auto s = settings();
 
-    painter->drawPath(m_titleBarPath);
+    if (!classicGradient)
+        painter->drawPath(m_titleBarPath);
 
     painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
     // draw titlebar separator
@@ -1536,7 +1561,7 @@ void Decoration::paintTitleBar(QPainter *painter, const QRectF &repaintRegion)
 
     // draw caption
     QFont font = s->font();
-    if (m_internalSettings->boldTitle() && c->isActive()) {
+    if (m_internalSettings->boldTitle() && (c->isActive() || m_internalSettings->classicTitleShadow())) {
         QFont::Weight weight = font.weight();
         if (weight < QFont::Black) {
             weight = (weight >= QFont::DemiBold) ? QFont::ExtraBold : QFont::DemiBold;
@@ -1549,6 +1574,18 @@ void Decoration::paintTitleBar(QPainter *painter, const QRectF &repaintRegion)
     const auto [maxCaptionRectangle, alignment] = captionRect();
     const QString caption = painter->fontMetrics().elidedText(c->caption(), Qt::ElideMiddle, maxCaptionRectangle.width());
     QRectF captionBoundingRect;
+    if (m_internalSettings->classicTitleShadow() && c->isActive()) {
+        painter->save();
+        painter->setClipRect(maxCaptionRectangle, Qt::IntersectClip);
+        const QColor base = this->titleBarColor();
+        painter->setPen(ClassicRelief::shade(base, 0.75));
+        painter->drawText(maxCaptionRectangle.translated(1, 2), alignment | Qt::TextSingleLine, caption);
+        painter->setPen(ClassicRelief::shade(base, 0.70));
+        painter->drawText(maxCaptionRectangle.translated(2, 2), alignment | Qt::TextSingleLine, caption);
+        painter->setPen(ClassicRelief::shade(base, 0.40));
+        painter->drawText(maxCaptionRectangle.translated(1, 1), alignment | Qt::TextSingleLine, caption);
+        painter->restore();
+    }
     painter->drawText(maxCaptionRectangle, alignment | Qt::TextSingleLine, caption, &captionBoundingRect);
 
     // draw underline

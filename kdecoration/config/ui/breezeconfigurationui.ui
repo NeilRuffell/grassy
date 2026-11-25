@@ -1220,6 +1220,32 @@
           </layout>
          </item>
          <item>
+          <widget class="QGroupBox" name="classicReliefGroup">
+           <property name="title"><string>Classic relief</string></property>
+           <property name="toolTip"><string>Optional Metacity-style two-stage gloss and bevels. Raised buttons require a small square or rounded-square shape. Custom colours override KDE titlebar colours.</string></property>
+           <layout class="QGridLayout" name="classicReliefLayout">
+           <item row="0" column="0" colspan="2"><widget class="QCheckBox" name="classicGradientActive"><property name="text"><string>Active two-stage gloss</string></property></widget></item>
+           <item row="0" column="2" colspan="2"><widget class="QCheckBox" name="classicGradientInactive"><property name="text"><string>Inactive two-stage gloss</string></property></widget></item>
+           <item row="1" column="0" colspan="2"><widget class="QCheckBox" name="classicButtonBevel"><property name="text"><string>Raised small buttons</string></property></widget></item>
+           <item row="1" column="2" colspan="2"><widget class="QCheckBox" name="classicFrameBevel"><property name="text"><string>Beveled window frame</string></property></widget></item>
+           <item row="2" column="0" colspan="2"><widget class="QCheckBox" name="classicTitleShadow"><property name="text"><string>Classic title text shadow</string></property></widget></item>
+           <item row="2" column="2" colspan="2"><widget class="QCheckBox" name="classicCustomColors"><property name="text"><string>Override decoration colours</string></property></widget></item>
+           <item row="3" column="0"><widget class="QLabel" name="labelClassicFrameWidth"><property name="text"><string>Frame width (px)</string></property></widget></item>
+           <item row="3" column="1"><widget class="QSpinBox" name="classicFrameWidth"><property name="minimum"><number>1</number></property><property name="maximum"><number>16</number></property></widget></item>
+           <item row="3" column="2"><widget class="QLabel" name="labelClassicActiveColor"><property name="text"><string>Active titlebar</string></property></widget></item>
+           <item row="3" column="3"><widget class="KColorButton" name="classicActiveColor"></widget></item>
+           <item row="4" column="0"><widget class="QLabel" name="labelClassicInactiveColor"><property name="text"><string>Inactive titlebar</string></property></widget></item>
+           <item row="4" column="1"><widget class="KColorButton" name="classicInactiveColor"></widget></item>
+           <item row="4" column="2"><widget class="QLabel" name="labelClassicFrameColor"><property name="text"><string>Frame</string></property></widget></item>
+           <item row="4" column="3"><widget class="KColorButton" name="classicFrameColor"></widget></item>
+           <item row="5" column="0"><widget class="QLabel" name="labelClassicActiveText"><property name="text"><string>Active text</string></property></widget></item>
+           <item row="5" column="1"><widget class="KColorButton" name="classicActiveText"></widget></item>
+           <item row="5" column="2"><widget class="QLabel" name="labelClassicInactiveText"><property name="text"><string>Inactive text</string></property></widget></item>
+           <item row="5" column="3"><widget class="KColorButton" name="classicInactiveText"></widget></item>
+           </layout>
+          </widget>
+         </item>
+         <item>
           <spacer name="verticalSpacer_19">
            <property name="orientation">
             <enum>Qt::Orientation::Vertical</enum>

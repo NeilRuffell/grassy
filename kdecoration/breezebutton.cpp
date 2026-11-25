@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
  */
 #include "breezebutton.h"
+#include "classicrelief.h"
 #include "breeze.h"
 #include "colortools.h"
 #include "geometrytools.h"
@@ -170,6 +171,8 @@ void Button::paint(QPainter *painter, const QRectF &repaintRegion)
     m_backgroundColor = this->backgroundColor(m_isGtkCsdButton);
     m_foregroundColor = this->foregroundColor(m_isGtkCsdButton);
     m_outlineColor = this->outlineColor(m_isGtkCsdButton);
+    if (m_d->internalSettings()->classicCustomColors() && m_foregroundColor.isValid() && !isStandAlone() && !m_isGtkCsdButton)
+        m_foregroundColor = m_d->fontColor();
     // (the active-state animation breaks over states in m_isGtkCsdButton generation)
 
     if (!m_smallButtonPaddedSize.isValid() || isStandAlone()) {
@@ -1036,6 +1039,20 @@ void Button::paintSmallSizedButtonBackground(QPainter *painter) const
     painter->translate(translationOffset, translationOffset);
     qreal geometryEnlargeOffset = 0;
     qreal backgroundSize = m_backgroundVisibleSize.width();
+    const auto shape = m_d->internalSettings()->buttonShape();
+    if (m_d->internalSettings()->classicButtonBevel() && m_backgroundColor.isValid()
+        && !isStandAlone() && !m_isGtkCsdButton
+        && (shape == InternalSettings::EnumButtonShape::ShapeSmallRoundedSquare
+            || shape == InternalSettings::EnumButtonShape::ShapeSmallSquare)) {
+        qreal radius = 0;
+        if (shape == InternalSettings::EnumButtonShape::ShapeSmallRoundedSquare)
+            radius = (m_d->internalSettings()->buttonCornerRadius() == InternalSettings::EnumButtonCornerRadius::Custom
+                      ? m_d->internalSettings()->buttonCustomCornerRadius() : m_d->internalSettings()->windowCornerRadius()) * m_d->x11Scale();
+        ClassicRelief::button(painter, QRectF(0, 0, backgroundSize, backgroundSize),
+                              radius, m_d->titleBarColor(), m_d->window()->isActive(), hovered(), isPressed());
+        painter->restore();
+        return;
+    }
 
     qreal penWidth = m_isGtkCsdButton ? m_standardScaledNonCosmeticPenWidth : PenWidth::Symbol;
     if (KWindowSystem::isPlatformX11()) {
