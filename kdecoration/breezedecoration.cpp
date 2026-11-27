@@ -15,6 +15,7 @@
 
 #include "breezeboxshadowrenderer.h"
 #include "breezebutton.h"
+#include "classicrelief.h"
 #include "breezesettingsprovider.h"
 #include "dbusupdatenotifier.h"
 #include "geometrytools.h"
@@ -195,6 +196,14 @@ QColor Decoration::titleBarColor(bool returnNonAnimatedColor) const
 
     QColor activeTitleBarColor = m_decorationColors->active()->titleBarBase;
     QColor inactiveTitlebarColor = m_decorationColors->inactive()->titleBarBase;
+    if (m_internalSettings->classicCustomColors()) {
+        const int activeAlpha = activeTitleBarColor.alpha();
+        const int inactiveAlpha = inactiveTitlebarColor.alpha();
+        activeTitleBarColor = m_internalSettings->classicActiveColor();
+        inactiveTitlebarColor = m_internalSettings->classicInactiveColor();
+        activeTitleBarColor.setAlpha(activeAlpha);
+        inactiveTitlebarColor.setAlpha(inactiveAlpha);
+    }
     if (m_internalSettings->opaqueTitleBar() || (m_internalSettings->opaqueMaximizedTitleBars() && c->isMaximized())) {
         activeTitleBarColor.setAlpha(255);
         inactiveTitlebarColor.setAlpha(255);
@@ -275,6 +284,13 @@ QColor Decoration::overriddenOutlineColorAnimateOut(const QColor &destinationCol
 QColor Decoration::fontColor(bool returnNonAnimatedColor) const
 {
     auto c = window();
+    if (m_internalSettings->classicCustomColors()) {
+        const QColor active = m_internalSettings->classicActiveText();
+        const QColor inactive = m_internalSettings->classicInactiveText();
+        if (m_animation->state() == QAbstractAnimation::Running && !returnNonAnimatedColor)
+            return KColorUtils::mix(inactive, active, m_animation->currentValue().toReal());
+        return c->isActive() ? active : inactive;
+    }
 
     if (m_animation->state() == QAbstractAnimation::Running && !returnNonAnimatedColor) {
         return KColorUtils::mix(m_decorationColors->inactive()->titleBarText, m_decorationColors->active()->titleBarText, m_animation->currentValue().toReal());
@@ -559,6 +575,8 @@ qreal Decoration::borderSize(bool bottom, qreal scale) const
         }
     }
 
+    if (borderSize > 0 && m_internalSettings && m_internalSettings->classicFrameBevel())
+        return KDecoration3::snapToPixelGrid(m_internalSettings->classicFrameWidth() * m_x11Scale, scale);
     return KDecoration3::snapToPixelGrid(borderSize, scale);
 }
 
@@ -1034,6 +1052,8 @@ void Decoration::updateButtonsGeometry()
         bHeightNormal = captionHeight + (isTopEdge() ? buttonTopMargin : 0);
         // do not pixel grid snap icon offsets -- the icon gets snapped at the end anyway, and this keeps icons centred
         verticalIconOffsetNormal = (isTopEdge() ? buttonTopMargin : 0) + qreal(captionHeight - m_smallButtonPaddedSize);
+        if (m_internalSettings->classicGeometry())
+            verticalIconOffsetNormal = (isTopEdge() ? buttonTopMargin : 0) + qMax(qreal(0), (captionHeight - m_smallButtonPaddedSize) / 2);
 
         buttonSpacingLeft =
             KDecoration3::snapToPixelGrid(m_x11Scale * (isRightToLeft() ? m_internalSettings->buttonSpacingRight() : m_internalSettings->buttonSpacingLeft()),
@@ -1355,8 +1375,12 @@ void Decoration::paint(QPainter *painter, const QRectF &repaintRegion)
         } else
             windowBorderColor = c->color(c->isActive() ? ColorGroup::Active : ColorGroup::Inactive, ColorRole::Frame);
 
+        if (m_internalSettings->classicCustomColors() && m_internalSettings->classicFrameBevel())
+            windowBorderColor = m_internalSettings->classicFrameColor();
         painter->setBrush(windowBorderColor);
         painter->drawPath(m_windowPath);
+        if (m_internalSettings->classicFrameBevel())
+            ClassicRelief::frame(painter, QRectF(rect()), m_windowPath, windowBorderColor, borderLeft(), borderRight(), borderBottom());
         //
         painter->restore();
     }
@@ -1366,7 +1390,7 @@ void Decoration::paint(QPainter *painter, const QRectF &repaintRegion)
         paintTitleBar(painter, repaintRegion);
     }
 
-    if (hasBorders() && !s->isAlphaChannelSupported()) {
+    if (hasBorders() && !s->isAlphaChannelSupported() && !m_internalSettings->classicFrameBevel()) {
         painter->save();
         painter->setRenderHint(QPainter::Antialiasing, false);
         painter->setBrush(Qt::NoBrush);
@@ -1407,7 +1431,9 @@ void Decoration::calculateWindowShape()
                     windowCorners |= CornerTopRight;
                 }
             }
-            m_windowPath = GeometryTools::roundedPath(windowRect, windowCorners, m_scaledCornerRadius);
+            m_windowPath = m_internalSettings->classicGeometry()
+                ? ClassicRelief::steppedPath(windowRect, windowCorners, m_scaledCornerRadius)
+                : GeometryTools::roundedPath(windowRect, windowCorners, m_scaledCornerRadius);
 
         } else // maximized / no alpha
             m_windowPath.addRect(windowRect);
@@ -1418,7 +1444,10 @@ void Decoration::calculateWindowShape()
         if (isMaximized() || !s->isAlphaChannelSupported()) {
             m_windowPath.addRect(m_titleRect);
         } else {
-            m_windowPath.addRoundedRect(m_titleRect, m_scaledCornerRadius, m_scaledCornerRadius);
+            if (m_internalSettings->classicGeometry())
+                m_windowPath = ClassicRelief::steppedPath(m_titleRect, AllCorners, m_scaledCornerRadius);
+            else
+                m_windowPath.addRoundedRect(m_titleRect, m_scaledCornerRadius, m_scaledCornerRadius);
         }
     }
 }
@@ -1435,7 +1464,10 @@ void Decoration::calculateTitleBarShape()
     if (isMaximized() || !s->isAlphaChannelSupported()) {
         m_titleBarPath.addRect(m_titleRect);
     } else if (c->isShaded()) {
-        m_titleBarPath.addRoundedRect(m_titleRect, m_scaledCornerRadius, m_scaledCornerRadius);
+        if (m_internalSettings->classicGeometry())
+            m_titleBarPath = m_windowPath;
+        else
+            m_titleBarPath.addRoundedRect(m_titleRect, m_scaledCornerRadius, m_scaledCornerRadius);
     } else {
         Corners titleBarCorners;
         if (!isTopEdge()) {
@@ -1446,7 +1478,9 @@ void Decoration::calculateTitleBarShape()
                 titleBarCorners |= CornerTopRight;
             }
         }
-        m_titleBarPath = GeometryTools::roundedPath(m_titleRect, titleBarCorners, m_scaledCornerRadius);
+        m_titleBarPath = m_internalSettings->classicGeometry()
+            ? ClassicRelief::steppedPath(m_titleRect, titleBarCorners, m_scaledCornerRadius)
+            : GeometryTools::roundedPath(m_titleRect, titleBarCorners, m_scaledCornerRadius);
     }
 }
 
@@ -1472,8 +1506,10 @@ void Decoration::paintTitleBar(QPainter *painter, const QRectF &repaintRegion)
         painter->setCompositionMode(QPainter::CompositionMode_Source);
     }
 
-    // render a linear gradient on title area
-    if (c->isActive() && m_internalSettings->drawBackgroundGradient()) {
+    const bool classicGradient = c->isActive() ? m_internalSettings->classicGradientActive() : m_internalSettings->classicGradientInactive();
+    if (classicGradient) {
+        ClassicRelief::titlebar(painter, m_titleRect, m_titleBarPath, titleBarColor, c->isActive(), isLeftEdge(), isRightEdge());
+    } else if (c->isActive() && m_internalSettings->drawBackgroundGradient()) {
         if (m_internalSettings->drawTitleBarLeftToRightGradient()) {
             QLinearGradient gradient(m_titleRect.left(), 0, m_titleRect.right(), 0);
             QColor leftColor = m_internalSettings->titleBarLeftToRightGradientLeftColor();
@@ -1506,7 +1542,8 @@ void Decoration::paintTitleBar(QPainter *painter, const QRectF &repaintRegion)
 
     auto s = settings();
 
-    painter->drawPath(m_titleBarPath);
+    if (!classicGradient)
+        painter->drawPath(m_titleBarPath);
 
     painter->setCompositionMode(QPainter::CompositionMode_SourceOver);
     // draw titlebar separator
@@ -1536,7 +1573,9 @@ void Decoration::paintTitleBar(QPainter *painter, const QRectF &repaintRegion)
 
     // draw caption
     QFont font = s->font();
-    if (m_internalSettings->boldTitle() && c->isActive()) {
+    if (m_internalSettings->boldTitle() && m_internalSettings->classicGeometry()) {
+        font.setWeight(QFont::Bold);
+    } else if (m_internalSettings->boldTitle() && (c->isActive() || m_internalSettings->classicTitleShadow())) {
         QFont::Weight weight = font.weight();
         if (weight < QFont::Black) {
             weight = (weight >= QFont::DemiBold) ? QFont::ExtraBold : QFont::DemiBold;
@@ -1549,6 +1588,18 @@ void Decoration::paintTitleBar(QPainter *painter, const QRectF &repaintRegion)
     const auto [maxCaptionRectangle, alignment] = captionRect();
     const QString caption = painter->fontMetrics().elidedText(c->caption(), Qt::ElideMiddle, maxCaptionRectangle.width());
     QRectF captionBoundingRect;
+    if (m_internalSettings->classicTitleShadow() && c->isActive()) {
+        painter->save();
+        painter->setClipRect(maxCaptionRectangle, Qt::IntersectClip);
+        const QColor base = this->titleBarColor();
+        painter->setPen(ClassicRelief::shade(base, 0.75));
+        painter->drawText(maxCaptionRectangle.translated(1, 2), alignment | Qt::TextSingleLine, caption);
+        painter->setPen(ClassicRelief::shade(base, 0.70));
+        painter->drawText(maxCaptionRectangle.translated(2, 2), alignment | Qt::TextSingleLine, caption);
+        painter->setPen(ClassicRelief::shade(base, 0.40));
+        painter->drawText(maxCaptionRectangle.translated(1, 1), alignment | Qt::TextSingleLine, caption);
+        painter->restore();
+    }
     painter->drawText(maxCaptionRectangle, alignment | Qt::TextSingleLine, caption, &captionBoundingRect);
 
     // draw underline
@@ -1578,7 +1629,8 @@ void Decoration::paintTitleBar(QPainter *painter, const QRectF &repaintRegion)
 void Decoration::calculateIconSizes()
 {
     qreal scale = window()->scale();
-    qreal baseSize = settings()->gridUnit(); // 10 on Wayland
+    const qreal gridUnit = settings()->gridUnit(); // 10 on Wayland
+    qreal baseSize = gridUnit;
     qreal basePaddingSize = m_smallSpacing; // 2 on Wayland
 
     if (m_internalSettings->buttonIconStyle() == InternalSettings::EnumButtonIconStyle::StyleSystemIconTheme) {
@@ -1651,6 +1703,18 @@ void Decoration::calculateIconSizes()
             basePaddingSize *= 2;
             break;
         }
+    }
+
+    if (m_internalSettings->classicGeometry() && m_buttonBackgroundType == ButtonBackgroundType::Small) {
+        // Use the native size selection above, normalised to the Human
+        // preset's SmallMedium (1.8 grid units) and 112% background size.
+        // Preserve the previous 24/16/20 proportions at that reference size.
+        const qreal iconFactor = baseSize / (1.8 * gridUnit) * m_x11Scale;
+        const qreal backgroundFactor = iconFactor * m_internalSettings->scaleBackgroundPercent() / 112.0;
+        m_smallButtonPaddedSize = KDecoration3::snapToPixelGrid(24 * backgroundFactor, scale);
+        m_iconSize = KDecoration3::snapToPixelGrid(16 * iconFactor, scale);
+        m_smallButtonBackgroundSize = KDecoration3::snapToPixelGrid(20 * backgroundFactor, scale);
+        return;
     }
 
     baseSize = KDecoration3::snapToPixelGrid(baseSize, scale);

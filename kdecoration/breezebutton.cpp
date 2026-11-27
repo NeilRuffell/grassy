@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
  */
 #include "breezebutton.h"
+#include "classicrelief.h"
 #include "breeze.h"
 #include "colortools.h"
 #include "geometrytools.h"
@@ -170,6 +171,8 @@ void Button::paint(QPainter *painter, const QRectF &repaintRegion)
     m_backgroundColor = this->backgroundColor(m_isGtkCsdButton);
     m_foregroundColor = this->foregroundColor(m_isGtkCsdButton);
     m_outlineColor = this->outlineColor(m_isGtkCsdButton);
+    if (m_d->internalSettings()->classicCustomColors() && m_foregroundColor.isValid() && !isStandAlone() && !m_isGtkCsdButton)
+        m_foregroundColor = m_d->fontColor();
     // (the active-state animation breaks over states in m_isGtkCsdButton generation)
 
     if (!m_smallButtonPaddedSize.isValid() || isStandAlone()) {
@@ -260,6 +263,17 @@ void Button::drawIcon(QPainter *painter) const
 
     if (!m_foregroundColor.isValid())
         return;
+
+    if (m_d->internalSettings()->classicGlyphs() && !isStandAlone() && !m_isGtkCsdButton
+        && m_d->buttonBackgroundType() == ButtonBackgroundType::Small) {
+        // Retain the classic 10:16 glyph-to-icon ratio at every icon size.
+        const qreal glyphSize = m_iconSize.width() * (10.0 / 16.0);
+        const qreal offset = (smallButtonPaddedWidth - glyphSize) / 2;
+        if (ClassicRelief::glyph(painter, QRectF(offset, offset, glyphSize, glyphSize),
+                                static_cast<DecorationButtonType>(type()), isChecked(),
+                                m_foregroundColor, m_d->titleBarColor(), m_d->window()->isActive()))
+            return;
+    }
 
     // render the actual icon
     qreal iconWidth(m_iconSize.width());
@@ -1036,6 +1050,24 @@ void Button::paintSmallSizedButtonBackground(QPainter *painter) const
     painter->translate(translationOffset, translationOffset);
     qreal geometryEnlargeOffset = 0;
     qreal backgroundSize = m_backgroundVisibleSize.width();
+    const auto shape = m_d->internalSettings()->buttonShape();
+    if (m_d->internalSettings()->classicButtonBevel() && m_backgroundColor.isValid()
+        && !isStandAlone() && !m_isGtkCsdButton
+        && (shape == InternalSettings::EnumButtonShape::ShapeSmallRoundedSquare
+            || shape == InternalSettings::EnumButtonShape::ShapeSmallSquare)) {
+        qreal radius = 0;
+        if (shape == InternalSettings::EnumButtonShape::ShapeSmallRoundedSquare)
+            radius = (m_d->internalSettings()->buttonCornerRadius() == InternalSettings::EnumButtonCornerRadius::Custom
+                      ? m_d->internalSettings()->buttonCustomCornerRadius() : m_d->internalSettings()->windowCornerRadius()) * m_d->x11Scale();
+        const bool classicGeometry = m_d->internalSettings()->classicGeometry();
+        const qreal height = classicGeometry ? backgroundSize * 0.90 : backgroundSize;
+        // Match the original 24:18 visible surround instead of 22:18.
+        const qreal width = classicGeometry ? qMin(m_smallButtonPaddedSize.width(), backgroundSize * 1.20) : backgroundSize;
+        ClassicRelief::button(painter, QRectF((backgroundSize - width) / 2, (backgroundSize - height) / 2, width, height),
+                              radius, m_d->titleBarColor(), m_d->window()->isActive(), hovered(), isPressed());
+        painter->restore();
+        return;
+    }
 
     qreal penWidth = m_isGtkCsdButton ? m_standardScaledNonCosmeticPenWidth : PenWidth::Symbol;
     if (KWindowSystem::isPlatformX11()) {
