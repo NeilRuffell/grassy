@@ -10,12 +10,16 @@ Classic geometry uses the five-step corner silhouette and a 24 logical-pixel min
 
 Classic relief, stepped paths and classic glyphs use QPainter primitives and gradients only. There are no PNG, SVG or other image assets in the classic renderer. KWin still uses a procedurally generated shadow texture, and the application-provided menu icon and the user's explicitly selected icon theme are outside this guarantee. Existing project artwork and previews outside the decoration renderer are unchanged.
 
-Load the bundled **Human Jaunty** preset for the source-reference palette, or **Human Orange** for an editable orange approximation. Both include decoration colours without requiring a KDE colour scheme change. Existing users' bundled presets refresh when opening settings without replacing non-bundled presets of the same name. Reload the preset to apply newly added options.
+## Colour scheme integration
+
+Load the single bundled **Human** preset. It contains rendering and geometry settings, not a fixed palette. Active and inactive titlebar and title text colours follow Klassy's existing KDE colour handling; the frame follows the window frame colour and button gloss derives from the titlebar colour. Bevels and shadows are calculated from those base colours. Select the desired KDE colour scheme separately. Manual decoration colour overrides remain available, but are disabled in the bundled Human preset.
+
+The old bundled Human Jaunty and Human Orange presets are retired. Existing bundled presets refresh when opening settings; user-saved presets are preserved. Stale installed copies of the two retired preset files are ignored on bundled import because CMake does not remove obsolete files when upgrading. Reload Human to switch an already-applied old palette to scheme-driven colours. Existing window-specific rules referencing a retired bundled preset must select Human instead.
 
 ## Remaining accuracy limits
 
-The reference specifies fixed 24 px titlebar and 26 px button hitbox, 5 px frame, stepped corner pixels and bitmap button glyphs. Grassy approximates the original vector glyph silhouettes without distributing raster assets, preserves readable font sizes and native window button geometry, and still relies on KWin's rounded border-radius API and generated shadow texture. Exact per-pixel bevels and maximized-window geometry remain unverified. The orange palette is estimated. No full KDE build or live visual comparison has been performed.
+The reference specifies fixed 24 px titlebar and 26 px button hitbox, 5 px frame, stepped corner pixels and bitmap button glyphs. Grassy approximates the original vector glyph silhouettes without distributing raster assets, preserves readable font sizes and native window button geometry, and still relies on KWin's rounded border-radius API and generated shadow texture. Exact per-pixel bevels and maximized-window geometry remain unverified. Exact historical colours depend on the selected KDE colour scheme. This palette consolidation has not been tested in a live KDE session.
 
 ## Validation
 
-Run the Python source-level tests, build and test on Plasma 6 with Klassy installed. Reload both presets and test active/inactive, normal/hover/pressed, maximize/restore, tiled and shaded windows, at 100%, 125%, 150% and 200% scaling. Verify that title text and glyphs remain crisp and that corner/outline/shadow geometry is coherent. Load an older preset to confirm the new switches default to off.
+Run the Python source-level tests, build and test on Plasma 6 with Klassy installed. Load Human, switch between light, dark and differently coloured KDE schemes without reloading the preset, and test active/inactive, normal/hover/pressed, maximize/restore, tiled and shaded windows, at 100%, 125%, 150% and 200% scaling. Verify that title text and glyphs remain crisp and that corner/outline/shadow geometry is coherent. Load an older preset to confirm the new switches default to off.

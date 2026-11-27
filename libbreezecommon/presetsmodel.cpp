@@ -373,7 +373,7 @@ void PresetsModel::importBundledPresets(KConfig *presetsConfig)
     if (presetsConfig->hasGroup("Global")) {
         KConfigGroup globalGroup = presetsConfig->group("Global");
         if (globalGroup.hasKey("BundledWindecoPresetsImportedVersion")) {
-            if (globalGroup.readEntry("BundledWindecoPresetsImportedVersion") == klassyLongVersion() + QStringLiteral(":classic-relief-2")) {
+            if (globalGroup.readEntry("BundledWindecoPresetsImportedVersion") == klassyLongVersion() + QStringLiteral(":classic-relief-3")) {
                 return;
             }
         }
@@ -395,6 +395,12 @@ void PresetsModel::importBundledPresets(KConfig *presetsConfig)
             QStringList presetFiles = presetsDir.entryList();
 
             for (QString presetFile : presetFiles) {
+                // Older installs may retain these two files because CMake
+                // does not remove obsolete files on upgrade. Do not import
+                // the retired bundled variants. Non-bundled user presets
+                // are preserved by deleteBundledPresets().
+                if (presetFile == QStringLiteral("Human_Jaunty.klpw") || presetFile == QStringLiteral("Human_Orange.klpw"))
+                    continue;
                 presetFile = libraryPath + "/" + presetFile; // set absolute full path
                 QString presetName;
                 QString error;
@@ -411,7 +417,7 @@ void PresetsModel::importBundledPresets(KConfig *presetsConfig)
     }
 
     KConfigGroup globalGroup = presetsConfig->group("Global");
-    globalGroup.writeEntry("BundledWindecoPresetsImportedVersion", klassyLongVersion() + QStringLiteral(":classic-relief-2"));
+    globalGroup.writeEntry("BundledWindecoPresetsImportedVersion", klassyLongVersion() + QStringLiteral(":classic-relief-3"));
     presetsConfig->sync();
 }
 }

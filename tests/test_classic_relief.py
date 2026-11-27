@@ -52,23 +52,37 @@ class ClassicReliefTests(unittest.TestCase):
                 ]
             for key in names:
                 keys[key] = entry
-        for suffix in ("Jaunty", "Orange"):
-            path = ROOT / f"kdecoration/config/presets/Human_{suffix}.klpw"
-            preset = configparser.ConfigParser(interpolation=None)
-            preset.optionxform = str
-            preset.read(path, encoding="utf-8")
-            group = preset[f"Windeco Preset Human {suffix}"]
-            for key, value in group.items():
-                self.assertIn(key, keys, f"{suffix}: {key}")
-                entry = keys[key]
-                if entry is not None and entry.attrib["type"] == "Enum":
+        path = ROOT / "kdecoration/config/presets/Human.klpw"
+        preset = configparser.ConfigParser(interpolation=None)
+        preset.optionxform = str
+        preset.read(path, encoding="utf-8")
+        group = preset["Windeco Preset Human"]
+        for key, value in group.items():
+            self.assertIn(key, keys, key)
+            entry = keys[key]
+            if entry is not None:
+                self.assertNotEqual(entry.attrib["type"], "Color", key)
+                if entry.attrib["type"] == "Enum":
                     self.assertIn(value, [c.attrib["name"] for c in entry.findall("k:choices/k:choice", NS)])
-            for name in ("ClassicGradientActive", "ClassicGradientInactive",
-                         "ClassicButtonBevel", "ClassicFrameBevel",
-                         "ClassicTitleShadow", "ClassicCustomColors",
-                         "ClassicGeometry", "ClassicGlyphs"):
-                self.assertTrue(group.getboolean(name))
-            self.assertEqual(group.getint("ClassicFrameWidth"), 5)
+            self.assertFalse(key.startswith("ButtonOverrideColors"), key)
+        for name in ("ClassicGradientActive", "ClassicGradientInactive",
+                     "ClassicButtonBevel", "ClassicFrameBevel",
+                     "ClassicTitleShadow", "ClassicGeometry", "ClassicGlyphs"):
+            self.assertTrue(group.getboolean(name))
+        self.assertFalse(group.getboolean("ClassicCustomColors"))
+        self.assertEqual(group.getint("ClassicFrameWidth"), 5)
+        self.assertEqual(group["ButtonIconColorsActive"], "TitleBarText")
+        self.assertEqual(group["ButtonIconColorsInactive"], "TitleBarText")
+        self.assertFalse(group.getboolean("UseTitleBarColorForAllBorders"))
+
+    def test_retired_bundled_presets_not_reimported(self):
+        directory = ROOT / "kdecoration/config/presets"
+        model = (ROOT / "libbreezecommon/presetsmodel.cpp").read_text(encoding="utf-8")
+        for filename in ("Human_Jaunty.klpw", "Human_Orange.klpw"):
+            self.assertFalse((directory / filename).exists())
+            self.assertIn(f'presetFile == QStringLiteral("{filename}")', model)
+        self.assertIn(":classic-relief-3", model)
+        self.assertIn("if (isPresetFromFilePresent(presetsConfig, presetFile, presetName))", model)
 
 
 if __name__ == "__main__":

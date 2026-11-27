@@ -1,21 +1,16 @@
 [Klassy Window Decoration Preset File]
 version=6.7.3
 
-[Windeco Preset Human Orange]
+[Windeco Preset Human]
 ClassicGradientActive=true
 ClassicGradientInactive=true
 ClassicButtonBevel=true
 ClassicFrameBevel=true
 ClassicTitleShadow=true
-ClassicCustomColors=true
+ClassicCustomColors=false
 ClassicFrameWidth=5
 ClassicGeometry=true
 ClassicGlyphs=true
-ClassicActiveColor=193,129,57
-ClassicInactiveColor=230,221,213
-ClassicFrameColor=230,221,213
-ClassicActiveText=255,255,255
-ClassicInactiveText=108,98,88
 BoldTitle=true
 BoldButtonIcons=BoldIconsBold
 TitleAlignment=AlignCenter
