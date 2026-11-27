@@ -64,6 +64,23 @@ class ClassicReliefTests(unittest.TestCase):
         self.assertIn("glyphSize = m_iconSize.width() * (10.0 / 16.0)", button)
         self.assertNotIn("glyphSize = qMin(m_iconSize.width(), 10", button)
 
+    def test_human_button_outline_and_glyphs(self):
+        renderer = (ROOT / "kdecoration/classicrelief.h").read_text(encoding="utf-8")
+        button = renderer.split("inline void button(", 1)[1]
+        self.assertIn("outerPath.subtracted(innerPath)", button)
+        self.assertIn("overlay(Qt::black, 0.45)", button)
+        self.assertIn("innerPath.subtracted(corePath)", button)
+        self.assertIn("overlay(Qt::white, 0.40)", button)
+        self.assertIn("overlay(Qt::black, 0.20)", button)
+        self.assertNotIn("pressed ? dark : light", button)
+        glyph = renderer.split("inline bool glyph(", 1)[1].split("inline void gloss(", 1)[0]
+        self.assertIn("relief.createStroke(symbol).united(symbol)", glyph)
+        self.assertIn("stroker.setWidth(2.3)", glyph)
+        self.assertNotIn("p->translate(0.6, 0.8)", glyph)
+        source = (ROOT / "kdecoration/breezebutton.cpp").read_text(encoding="utf-8")
+        self.assertIn("backgroundSize * 1.20", source)
+        self.assertIn("backgroundSize * 0.90", source)
+
     def test_human_presets_use_valid_keys_and_enums(self):
         keys = {k: None for k in ("KwinBorderSize", "KwinButtonsOnLeft", "KwinButtonsOnRight")}
         for entry in self.entries:

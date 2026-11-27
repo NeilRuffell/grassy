@@ -47,8 +47,9 @@ inline QColor overlay(QColor c, qreal alpha)
     return c;
 }
 
-// Draw the historical 10-unit glyph silhouettes as vector primitives, with
-// the offset dark relief behind the foreground. Return false for other buttons.
+// Recreate compact Human glyphs in a scalable 10-unit design space.
+// The surrounding relief is a vector outline, not a displaced drop shadow.
+// Return false for other buttons.
 inline bool glyph(QPainter *p, const QRectF &area, DecorationButtonType type,
                   bool checked, const QColor &foreground, const QColor &base, bool active)
 {
@@ -65,37 +66,40 @@ inline bool glyph(QPainter *p, const QRectF &area, DecorationButtonType type,
     QPainterPath symbol;
     symbol.setFillRule(Qt::WindingFill);
     const auto box = [&symbol](qreal x, qreal y, qreal w, qreal h) {
-        symbol.addRect(QRectF(x, y, w, 1.7));
-        symbol.addRect(QRectF(x, y + 1.7, 1.2, h - 2.9));
-        symbol.addRect(QRectF(x + w - 1.2, y + 1.7, 1.2, h - 2.9));
-        symbol.addRect(QRectF(x, y + h - 1.2, w, 1.2));
+        const qreal stroke = 1.6;
+        symbol.addRect(QRectF(x, y, w, stroke));
+        symbol.addRect(QRectF(x, y + stroke, stroke, h - 2 * stroke));
+        symbol.addRect(QRectF(x + w - stroke, y + stroke, stroke, h - 2 * stroke));
+        symbol.addRect(QRectF(x, y + h - stroke, w, stroke));
     };
     if (type == DecorationButtonType::Minimize) {
-        symbol.addRect(QRectF(1, 7, 8, 1.7));
+        symbol.addRoundedRect(QRectF(1.6, 6.6, 6.8, 1.8), 0.3, 0.3);
     } else if (type == DecorationButtonType::Maximize) {
         if (!checked) {
-            box(1, 1, 8, 8);
+            box(1.6, 1.6, 6.8, 6.8);
         } else {
-            // Back window visible above and to the right of the front window.
-            symbol.addRect(QRectF(3, 0.7, 6.3, 1.3));
-            symbol.addRect(QRectF(8, 2, 1.3, 5));
-            box(0.7, 3, 6.3, 6.3);
+            symbol.addRect(QRectF(3.3, 1.2, 5.5, 1.4));
+            symbol.addRect(QRectF(7.4, 2.6, 1.4, 4.1));
+            box(1.2, 3.1, 5.6, 5.6);
         }
     } else {
         QPainterPath lines;
-        lines.moveTo(1.5, 1.5);
-        lines.lineTo(8.5, 8.5);
-        lines.moveTo(8.5, 1.5);
-        lines.lineTo(1.5, 8.5);
+        lines.moveTo(2.5, 2.5);
+        lines.lineTo(7.5, 7.5);
+        lines.moveTo(7.5, 2.5);
+        lines.lineTo(2.5, 7.5);
         QPainterPathStroker stroker;
-        stroker.setWidth(1.8);
+        stroker.setWidth(2.3);
         stroker.setCapStyle(Qt::SquareCap);
         symbol = stroker.createStroke(lines);
     }
-    p->save();
-    p->translate(0.6, 0.8);
-    p->fillPath(symbol, overlay(shade(base, 0.35), active ? 0.85 : 0.45));
-    p->restore();
+    symbol.setFillRule(Qt::WindingFill);
+    symbol = symbol.simplified();
+    QPainterPathStroker relief;
+    relief.setWidth(1.25);
+    relief.setJoinStyle(Qt::RoundJoin);
+    p->fillPath(relief.createStroke(symbol).united(symbol),
+                overlay(shade(base, 0.35), active ? 0.72 : 0.50));
     p->fillPath(symbol, foreground);
     p->restore();
     return true;
@@ -198,28 +202,51 @@ inline void button(QPainter *p, const QRectF &r, qreal radius, const QColor &bas
     if (r.width() < 4 || r.height() < 4)
         return;
     p->save();
-    QPainterPath path;
-    path.addRoundedRect(r, radius, radius);
-    p->setClipPath(path, Qt::IntersectClip);
+    // Human's 26x24 reference button slot contains a 24x18 visible
+    // surround. Its two one-unit outlines are concentric, not a
+    // conventional top-lit raised bevel. Scale the layers with the surface.
+    const qreal unit = qMin(r.width() / 24.0, r.height() / 18.0);
+    const QRectF inner = r.adjusted(unit, unit, -unit, -unit);
+    const qreal outerRadius = qBound(qreal(0), radius, qMin(r.width(), r.height()) / 2);
+    const qreal innerRadius = qMax(qreal(0), outerRadius - unit);
+    QPainterPath outerPath;
+    outerPath.addRoundedRect(r, outerRadius, outerRadius);
+    QPainterPath innerPath;
+    innerPath.addRoundedRect(inner, innerRadius, innerRadius);
+
+    // The translucent outer outline is composited directly over the
+    // titlebar. Do not fill the outline with the button's gradient first.
+    p->fillPath(outerPath.subtracted(innerPath), overlay(Qt::black, 0.45));
+    p->save();
+    p->setClipPath(innerPath, Qt::IntersectClip);
     if (active) {
-        if (pressed) gloss(p, r, base, 1.15, 0.75, 0.70, 0.75);
-        else if (hovered) gloss(p, r, base, 1.45, 1.05, 0.95, 1.05);
-        else gloss(p, r, base, 1.35, 0.95, 0.90, 0.95);
+        if (pressed) gloss(p, inner, base, 1.15, 0.75, 0.70, 0.75);
+        else if (hovered) gloss(p, inner, base, 1.45, 1.05, 0.95, 1.05);
+        else gloss(p, inner, base, 1.35, 0.95, 0.90, 0.95);
     } else {
-        if (pressed) gloss(p, r, base, 0.76, 0.75, 0.73, 0.75);
-        else if (hovered) gloss(p, r, base, 1.30, 1.10, 1.05, 1.10);
-        else gloss(p, r, base, 1.10, 1.00, 0.98, 1.00);
+        if (pressed) gloss(p, inner, base, 0.76, 0.75, 0.73, 0.75);
+        else if (hovered) gloss(p, inner, base, 1.30, 1.10, 1.05, 1.10);
+        else gloss(p, inner, base, 1.10, 1.00, 0.98, 1.00);
     }
-    const qreal x = r.x(), y = r.y(), w = r.width(), h = r.height();
-    const QColor light = overlay(Qt::white, 0.46), dark = overlay(Qt::black, 0.42);
-    const QColor upper = pressed ? dark : light, lower = pressed ? light : dark;
-    p->fillRect(QRectF(x + 1, y + 1, w - 2, 1), upper);
-    p->fillRect(QRectF(x + 1, y + 1, 1, h - 2), upper);
-    p->fillRect(QRectF(x + 1, y + h - 2, w - 2, 1), lower);
-    p->fillRect(QRectF(x + w - 2, y + 1, 1, h - 2), lower);
-    p->setBrush(Qt::NoBrush);
-    p->setPen(QPen(shade(base, active ? 0.40 : 0.55), 1));
-    p->drawRoundedRect(r.adjusted(0.5, 0.5, -0.5, -0.5), radius, radius);
+
+    // The reference uses the same white40 inner outline on every edge
+    // even when pressed; the pressed state changes the gradient instead.
+    const QRectF core = inner.adjusted(unit, unit, -unit, -unit);
+    QPainterPath corePath;
+    const qreal coreRadius = qMax(qreal(0), innerRadius - unit);
+    corePath.addRoundedRect(core, coreRadius, coreRadius);
+    const QPainterPath innerHighlight = innerPath.subtracted(corePath);
+    p->fillPath(innerHighlight, overlay(Qt::white, 0.40));
+
+    // Slightly darken the four highlight corner junctions, matching the
+    // reference's black20 accents without relying on bitmap corner masks.
+    p->setClipPath(innerHighlight, Qt::IntersectClip);
+    const QColor corner = overlay(Qt::black, 0.20);
+    for (const qreal x : {inner.left(), inner.right() - unit}) {
+        for (const qreal y : {inner.top(), inner.bottom() - unit})
+            p->fillRect(QRectF(x, y, unit, unit), corner);
+    }
+    p->restore();
     p->restore();
 }
 }

@@ -1061,7 +1061,8 @@ void Button::paintSmallSizedButtonBackground(QPainter *painter) const
                       ? m_d->internalSettings()->buttonCustomCornerRadius() : m_d->internalSettings()->windowCornerRadius()) * m_d->x11Scale();
         const bool classicGeometry = m_d->internalSettings()->classicGeometry();
         const qreal height = classicGeometry ? backgroundSize * 0.90 : backgroundSize;
-        const qreal width = classicGeometry ? qMin(m_smallButtonPaddedSize.width(), backgroundSize * 1.10) : backgroundSize;
+        // Match the original 24:18 visible surround instead of 22:18.
+        const qreal width = classicGeometry ? qMin(m_smallButtonPaddedSize.width(), backgroundSize * 1.20) : backgroundSize;
         ClassicRelief::button(painter, QRectF((backgroundSize - width) / 2, (backgroundSize - height) / 2, width, height),
                               radius, m_d->titleBarColor(), m_d->window()->isActive(), hovered(), isPressed());
         painter->restore();
