@@ -63,25 +63,46 @@ inline bool glyph(QPainter *p, const QRectF &area, DecorationButtonType type,
     p->translate(area.center() - QPointF(side / 2, side / 2));
     p->scale(side / 10, side / 10);
     p->setRenderHint(QPainter::Antialiasing, true);
+    if (type == DecorationButtonType::Maximize) {
+        // Draw the window outlines directly. Combining tiny rectangular
+        // fills with path simplification can lose edges at this scale.
+        QPainterPath windows;
+        if (!checked) {
+            windows.addRect(QRectF(1.8, 1.8, 6.4, 6.4));
+        } else {
+            // Only the exposed portion of the rear window is drawn.
+            // The front window is a complete, independent closed outline.
+            windows.moveTo(3.6, 3.0);
+            windows.lineTo(3.6, 1.5);
+            windows.lineTo(8.5, 1.5);
+            windows.lineTo(8.5, 6.4);
+            windows.lineTo(7.0, 6.4);
+            windows.addRect(QRectF(1.5, 3.6, 4.9, 4.9));
+        }
+
+        p->setBrush(Qt::NoBrush);
+        QPen outline(overlay(shade(base, 0.35), active ? 0.72 : 0.50));
+        outline.setWidthF(checked ? 1.9 : 2.2);
+        outline.setJoinStyle(Qt::MiterJoin);
+        outline.setCapStyle(Qt::FlatCap);
+        p->setPen(outline);
+        p->drawPath(windows);
+
+        QPen face(foreground);
+        face.setWidthF(checked ? 1.2 : 1.45);
+        face.setJoinStyle(Qt::MiterJoin);
+        face.setCapStyle(Qt::FlatCap);
+        p->setPen(face);
+        p->drawPath(windows);
+        p->restore();
+        return true;
+    }
+
+    // Keep the already accepted minimize and close glyphs unchanged.
     QPainterPath symbol;
     symbol.setFillRule(Qt::WindingFill);
-    const auto box = [&symbol](qreal x, qreal y, qreal w, qreal h) {
-        const qreal stroke = 1.6;
-        symbol.addRect(QRectF(x, y, w, stroke));
-        symbol.addRect(QRectF(x, y + stroke, stroke, h - 2 * stroke));
-        symbol.addRect(QRectF(x + w - stroke, y + stroke, stroke, h - 2 * stroke));
-        symbol.addRect(QRectF(x, y + h - stroke, w, stroke));
-    };
     if (type == DecorationButtonType::Minimize) {
         symbol.addRoundedRect(QRectF(1.6, 6.6, 6.8, 1.8), 0.3, 0.3);
-    } else if (type == DecorationButtonType::Maximize) {
-        if (!checked) {
-            box(1.6, 1.6, 6.8, 6.8);
-        } else {
-            symbol.addRect(QRectF(3.3, 1.2, 5.5, 1.4));
-            symbol.addRect(QRectF(7.4, 2.6, 1.4, 4.1));
-            box(1.2, 3.1, 5.6, 5.6);
-        }
     } else {
         QPainterPath lines;
         lines.moveTo(2.5, 2.5);

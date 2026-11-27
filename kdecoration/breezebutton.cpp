@@ -1063,8 +1063,17 @@ void Button::paintSmallSizedButtonBackground(QPainter *painter) const
         const qreal height = classicGeometry ? backgroundSize * 0.90 : backgroundSize;
         // Match the original 24:18 visible surround instead of 22:18.
         const qreal width = classicGeometry ? qMin(m_smallButtonPaddedSize.width(), backgroundSize * 1.20) : backgroundSize;
+        // Match the priority in backgroundColor(): physical press, then
+        // persistent checked state, then ordinary (including unison) hover.
+        const bool active = m_d->window()->isActive();
+        bool reliefPressed = isPressed();
+        bool reliefHovered = hovered();
+        if (!reliefPressed && isChecked() && isCheckable()) {
+            reliefHovered = m_d->internalSettings()->buttonStateChecked(active) == InternalSettings::EnumButtonStateChecked::Hover;
+            reliefPressed = !reliefHovered;
+        }
         ClassicRelief::button(painter, QRectF((backgroundSize - width) / 2, (backgroundSize - height) / 2, width, height),
-                              radius, m_d->titleBarColor(), m_d->window()->isActive(), hovered(), isPressed());
+                              radius, m_d->titleBarColor(), active, reliefHovered, reliefPressed);
         painter->restore();
         return;
     }

@@ -81,6 +81,33 @@ class ClassicReliefTests(unittest.TestCase):
         self.assertIn("backgroundSize * 1.20", source)
         self.assertIn("backgroundSize * 0.90", source)
 
+    def test_maximize_restore_use_closed_vector_outlines(self):
+        renderer = (ROOT / "kdecoration/classicrelief.h").read_text(encoding="utf-8")
+        glyph = renderer.split("inline bool glyph(", 1)[1].split("inline void gloss(", 1)[0]
+        windows = glyph.split("if (type == DecorationButtonType::Maximize) {", 1)[1].split(
+            "// Keep the already accepted minimize and close glyphs unchanged.", 1)[0]
+        self.assertIn("windows.addRect(QRectF(1.8, 1.8, 6.4, 6.4))", windows)
+        self.assertIn("windows.addRect(QRectF(1.5, 3.6, 4.9, 4.9))", windows)
+        self.assertIn("if (!checked)", windows)
+        self.assertEqual(windows.count("p->drawPath(windows)"), 2)
+        self.assertIn("p->setBrush(Qt::NoBrush)", windows)
+        self.assertNotIn("simplified()", windows)
+        self.assertNotIn("united(", windows)
+        self.assertIn("p->restore();", windows)
+
+    def test_classic_background_respects_native_checked_state(self):
+        source = (ROOT / "kdecoration/breezebutton.cpp").read_text(encoding="utf-8")
+        classic = source.split("void Button::paintSmallSizedButtonBackground(", 1)[1].split(
+            "qreal penWidth =", 1)[0]
+        self.assertIn("bool reliefPressed = isPressed()", classic)
+        self.assertIn("bool reliefHovered = hovered()", classic)
+        self.assertIn("if (!reliefPressed && isChecked() && isCheckable())", classic)
+        self.assertIn("buttonStateChecked(active) == InternalSettings::EnumButtonStateChecked::Hover", classic)
+        self.assertIn("reliefPressed = !reliefHovered", classic)
+        self.assertIn("active, reliefHovered, reliefPressed", classic)
+        checkable = source.split("bool Button::isCheckable() const", 1)[1].split("bool Button::hovered()", 1)[0]
+        self.assertNotIn("DecorationButtonType::Maximize", checkable)
+
     def test_human_presets_use_valid_keys_and_enums(self):
         keys = {k: None for k in ("KwinBorderSize", "KwinButtonsOnLeft", "KwinButtonsOnRight")}
         for entry in self.entries:
