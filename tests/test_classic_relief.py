@@ -40,6 +40,30 @@ class ClassicReliefTests(unittest.TestCase):
                                ("breezebutton.cpp", "ClassicRelief::glyph")):
             self.assertIn(method, (ROOT / "kdecoration" / source).read_text(encoding="utf-8"))
 
+    def test_gloss_is_one_four_stop_fill(self):
+        renderer = (ROOT / "kdecoration/classicrelief.h").read_text(encoding="utf-8")
+        gloss = renderer.split("inline void gloss(", 1)[1].split("inline void titlebar(", 1)[0]
+        self.assertEqual(gloss.count("QLinearGradient "), 1)
+        self.assertEqual(gloss.count("gradient.setColorAt("), 4)
+        self.assertEqual(gloss.count("p->fillRect("), 1)
+        self.assertIn("p->fillRect(r, gradient)", gloss)
+        self.assertIn("gradient.setColorAt(0.499, shade(base, b))", gloss)
+        self.assertIn("gradient.setColorAt(0.501, shade(base, c))", gloss)
+
+    def test_classic_geometry_uses_native_icon_size(self):
+        decoration = (ROOT / "kdecoration/breezedecoration.cpp").read_text(encoding="utf-8")
+        sizes = decoration.split("void Decoration::calculateIconSizes()", 1)[1].split("qreal Decoration::captionHeight", 1)[0]
+        classic = sizes.index("if (m_internalSettings->classicGeometry()")
+        self.assertLess(sizes.index("switch (m_internalSettings->iconSize())"), classic)
+        self.assertLess(sizes.index("switch (m_internalSettings->systemIconSize())"), classic)
+        self.assertIn("baseSize / (1.8 * gridUnit)", sizes)
+        self.assertIn("scaleBackgroundPercent() / 112.0", sizes)
+        for expression in ("24 * backgroundFactor", "16 * iconFactor", "20 * backgroundFactor"):
+            self.assertIn(expression, sizes)
+        button = (ROOT / "kdecoration/breezebutton.cpp").read_text(encoding="utf-8")
+        self.assertIn("glyphSize = m_iconSize.width() * (10.0 / 16.0)", button)
+        self.assertNotIn("glyphSize = qMin(m_iconSize.width(), 10", button)
+
     def test_human_presets_use_valid_keys_and_enums(self):
         keys = {k: None for k in ("KwinBorderSize", "KwinButtonsOnLeft", "KwinButtonsOnRight")}
         for entry in self.entries:

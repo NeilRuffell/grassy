@@ -1629,16 +1629,10 @@ void Decoration::paintTitleBar(QPainter *painter, const QRectF &repaintRegion)
 void Decoration::calculateIconSizes()
 {
     qreal scale = window()->scale();
-    qreal baseSize = settings()->gridUnit(); // 10 on Wayland
+    const qreal gridUnit = settings()->gridUnit(); // 10 on Wayland
+    qreal baseSize = gridUnit;
     qreal basePaddingSize = m_smallSpacing; // 2 on Wayland
 
-    if (m_internalSettings->classicGeometry() && m_buttonBackgroundType == ButtonBackgroundType::Small) {
-        // 24 logical-pixel hit area, 16px menu icon, 20px button surface.
-        m_smallButtonPaddedSize = KDecoration3::snapToPixelGrid(24 * m_x11Scale, scale);
-        m_iconSize = KDecoration3::snapToPixelGrid(16 * m_x11Scale, scale);
-        m_smallButtonBackgroundSize = KDecoration3::snapToPixelGrid(20 * m_x11Scale, scale);
-        return;
-    }
     if (m_internalSettings->buttonIconStyle() == InternalSettings::EnumButtonIconStyle::StyleSystemIconTheme) {
         switch (m_internalSettings->systemIconSize()) {
         case InternalSettings::EnumSystemIconSize::SystemIcon8: // 10, 8 on Wayland
@@ -1709,6 +1703,18 @@ void Decoration::calculateIconSizes()
             basePaddingSize *= 2;
             break;
         }
+    }
+
+    if (m_internalSettings->classicGeometry() && m_buttonBackgroundType == ButtonBackgroundType::Small) {
+        // Use the native size selection above, normalised to the Human
+        // preset's SmallMedium (1.8 grid units) and 112% background size.
+        // Preserve the previous 24/16/20 proportions at that reference size.
+        const qreal iconFactor = baseSize / (1.8 * gridUnit) * m_x11Scale;
+        const qreal backgroundFactor = iconFactor * m_internalSettings->scaleBackgroundPercent() / 112.0;
+        m_smallButtonPaddedSize = KDecoration3::snapToPixelGrid(24 * backgroundFactor, scale);
+        m_iconSize = KDecoration3::snapToPixelGrid(16 * iconFactor, scale);
+        m_smallButtonBackgroundSize = KDecoration3::snapToPixelGrid(20 * backgroundFactor, scale);
+        return;
     }
 
     baseSize = KDecoration3::snapToPixelGrid(baseSize, scale);

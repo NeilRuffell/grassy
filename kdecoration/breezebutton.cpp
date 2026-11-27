@@ -266,7 +266,8 @@ void Button::drawIcon(QPainter *painter) const
 
     if (m_d->internalSettings()->classicGlyphs() && !isStandAlone() && !m_isGtkCsdButton
         && m_d->buttonBackgroundType() == ButtonBackgroundType::Small) {
-        const qreal glyphSize = qMin(m_iconSize.width(), 10 * m_d->x11Scale());
+        // Retain the classic 10:16 glyph-to-icon ratio at every icon size.
+        const qreal glyphSize = m_iconSize.width() * (10.0 / 16.0);
         const qreal offset = (smallButtonPaddedWidth - glyphSize) / 2;
         if (ClassicRelief::glyph(painter, QRectF(offset, offset, glyphSize, glyphSize),
                                 static_cast<DecorationButtonType>(type()), isChecked(),

@@ -105,17 +105,16 @@ inline void gloss(QPainter *p, const QRectF &r, const QColor &base, qreal a, qre
 {
     if (r.isEmpty())
         return;
-    const qreal half = r.height() / 2;
-    const QRectF top(r.x(), r.y(), r.width(), half);
-    const QRectF bottom(r.x(), r.y() + half, r.width(), r.height() - half);
-    QLinearGradient upper(top.topLeft(), top.bottomLeft());
-    upper.setColorAt(0, shade(base, a));
-    upper.setColorAt(1, shade(base, b));
-    QLinearGradient lower(bottom.topLeft(), bottom.bottomLeft());
-    lower.setColorAt(0, shade(base, c));
-    lower.setColorAt(1, shade(base, d));
-    p->fillRect(top, upper);
-    p->fillRect(bottom, lower);
+    // Paint the two-stage gloss in one operation. Separate antialiased
+    // rectangles can reveal the underlying frame at their fractional boundary.
+    // Closely spaced midpoint stops preserve the intended sharp colour change
+    // without painting a separate line or leaving any uncovered pixels.
+    QLinearGradient gradient(r.topLeft(), r.bottomLeft());
+    gradient.setColorAt(0.0, shade(base, a));
+    gradient.setColorAt(0.499, shade(base, b));
+    gradient.setColorAt(0.501, shade(base, c));
+    gradient.setColorAt(1.0, shade(base, d));
+    p->fillRect(r, gradient);
 }
 inline void titlebar(QPainter *p, const QRectF &r, const QPainterPath &path, const QColor &base,
                      bool active, bool leftEdge, bool rightEdge)
